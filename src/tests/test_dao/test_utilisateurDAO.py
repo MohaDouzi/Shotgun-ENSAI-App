@@ -5,12 +5,11 @@ from datetime import datetime
 import pytest
 
 from unittest.mock import patch
-
-from utils.reset_database import ResetDatabase
 from utils.securite import hash_password
 
+from utils.reset_database import ResetDatabase
+
 from dao.utilisateur_dao import UtilisateurDao
-from business_object.Utilisateur import Utilisateur
 from model.utilisateur_models import UtilisateurModelOut, UtilisateurModelIn
 
 
@@ -123,12 +122,29 @@ def test_authentificate():
     """ Permet à l'utilisateur de s'authentifier"""
 
     # GIVEN
-    id_utilisateur = 678
-    mdp = "Mdpexemple35"
+    email = "bob.martin@email.com"
+    mdp = "mdpBob123"  # est ce qu'il faut faire le test avec le mdp hashé ?
 
     # WHEN
-    utilisateur = UtilisateurDao().authentificate(id_utilisateur,
-                                                  hash_password(mdp, id_utilisateur))
+    utilisateur = UtilisateurDao().authentificate(email, mdp)
 
     # THEN
-    assert isinstance(utilisateur, Utilisateur)
+    assert utilisateur is not None
+    assert isinstance(utilisateur, UtilisateurModelOut)
+
+
+def test_change_password():
+    """Met à jour le mot de passe"""
+
+    # GIVEN
+    new_mdp = "mdpAAlice123"
+    utilisateur = UtilisateurModelOut(id_utilisateur=1, email="alice.dupont@email.com", prenom="Alice",
+                                      nom="Dupont", telephone="0612345678",
+                                      mot_de_passe=hash_password(new_mdp),
+                                      administrateur=True, date_creation=datetime.now())
+
+    # WHEN
+    modification_ok = UtilisateurDao().update(utilisateur)
+
+    # THEN
+    assert modification_ok
