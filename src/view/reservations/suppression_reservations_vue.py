@@ -67,7 +67,7 @@ class SuppressionReservationVue(VueAbstraite):
 
     def choisir_menu(self) -> Optional[VueAbstraite]:
         """
-        Permet à l’utilisateur de sélectionner et confirmer la suppression d’une réservation.
+        Permet à l'utilisateur de sélectionner et confirmer la suppression d'une réservation.
         """
         # Import local pour éviter les boucles circulaires
         from view.client.connexion_client_vue import ConnexionClientVue
@@ -144,7 +144,7 @@ class SuppressionReservationVue(VueAbstraite):
                 f"Votre réservation #{resa.id_reservation} a été supprimée.\n"
                 f"Détails : {ev_label}\n\n"
                 "Si vous n'êtes pas à l'origine de cette action, merci de nous contacter.\n\n"
-                "— L’équipe du BDE Ensai"
+                "— L'équipe du BDE Ensai"
             )
             status, _ = send_email_brevo(
                 to_email=user.email,
@@ -158,4 +158,4 @@ class SuppressionReservationVue(VueAbstraite):
         except Exception as exc:
             print(f" Impossible d'envoyer l'e-mail de confirmation : {exc}")
 
-        return ConnexionClientVue("✅ Réservation supprimée avec succès.")
+        return ConnexionClientVue("Réservation supprimée avec succès.")

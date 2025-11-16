@@ -21,7 +21,7 @@ class CreationCompteVue:
 
     def __init__(self, message: str = ""):
         self.message = message
-        self.service = UtilisateurService()  # on passe par le service
+        self.service = UtilisateurService()  
 
     def afficher(self) -> None:
         print("\n--- CRÉER UN COMPTE ---")
@@ -65,7 +65,7 @@ class CreationCompteVue:
                 administrateur=False,
             )
 
-            user_out: UtilisateurModelOut = self.service.create_user(user_in)  # Service
+            user_out: UtilisateurModelOut = self.service.create_user(user_in)  
         except ValidationError as ve:
             print("\n Données invalides :")
             for err in ve.errors():
