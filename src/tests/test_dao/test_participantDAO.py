@@ -111,3 +111,49 @@ def test_delete():
 
     # THEN
     assert suppression_ok
+
+
+def test_authentificate():
+    """Permet à un participant de s'authentifier"""
+
+    # GIVEN
+    email = "alice.dupont@email.com"
+    mdp = "mdpAlice123"
+
+    # WHEN
+    participant = ParticipantDao().authentificate(email, mdp)
+
+    # THEN
+    assert participant is not None
+    assert isinstance(participant, ParticipantModelOut)
+    assert participant.email == email
+    assert participant.mot_de_passe != mdp  # Le mot de passe stocké doit être hashé
+    assert participant.administrateur is False  # Alice est un participant
+
+
+def test_change_password():
+    """Met à jour le mot de passe d'un participant"""
+
+    # GIVEN
+    dao = ParticipantDao()
+    email = "alice.dupont@email.com"
+    ancien_mdp = "mdpAlice123"
+    nouveau_mdp = "mdpAAlice123"
+
+    participant = dao.authentificate(email, ancien_mdp)
+    assert participant is not None, f"Échec authentification initiale pour {email}"
+
+    # WHEN - Passer l'ID, pas l'objet complet
+    modification_ok = dao.change_password(participant.id_utilisateur, nouveau_mdp)
+
+    # THEN
+    assert modification_ok is True, "Le changement de mot de passe a échoué"
+
+    # Vérifier que l'ancien mot de passe ne fonctionne plus
+    participant_ancien = dao.authentificate(email, ancien_mdp)
+    assert participant_ancien is None, "L'ancien mot de passe devrait être invalide"
+
+    # Vérifier que le nouveau mot de passe fonctionne
+    participant_apres = dao.authentificate(email, nouveau_mdp)
+    assert participant_apres is not None, "Le nouveau mot de passe devrait fonctionner"
+    assert participant_apres.id_utilisateur == participant.id_utilisateur

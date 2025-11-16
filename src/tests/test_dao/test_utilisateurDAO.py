@@ -137,14 +137,25 @@ def test_change_password():
     """Met à jour le mot de passe"""
 
     # GIVEN
-    new_mdp = "mdpAAlice123"
-    utilisateur = UtilisateurModelOut(id_utilisateur=1, email="alice.dupont@email.com", prenom="Alice",
-                                      nom="Dupont", telephone="0612345678",
-                                      mot_de_passe=hash_password(new_mdp),
-                                      administrateur=True, date_creation=datetime.now())
+    dao = UtilisateurDao()
+    email = "bob.martin@email.com"
+    ancien_mdp = "mdpBob123"
+    nouveau_mdp = "mdpBBob123"
 
-    # WHEN
-    modification_ok = UtilisateurDao().update(utilisateur)
+    utilisateur = dao.authentificate(email, ancien_mdp)
+    assert utilisateur is not None, f"Impossible de s'authentifier avec {email}"
+
+    # WHEN 
+    modification_ok = dao.change_password(utilisateur.id_utilisateur, nouveau_mdp)
 
     # THEN
-    assert modification_ok
+    assert modification_ok is True
+
+    # Vérifier que l'ancien mot de passe ne fonctionne plus
+    utilisateur_ancien = dao.authentificate(email, ancien_mdp)
+    assert utilisateur_ancien is None, "L'ancien mot de passe devrait être invalide"
+
+    # Vérifier que le nouveau mot de passe fonctionne
+    utilisateur_apres = dao.authentificate(email, nouveau_mdp)
+    assert utilisateur_apres is not None, "Le nouveau mot de passe devrait fonctionner"
+    assert utilisateur_apres.id_utilisateur == utilisateur.id_utilisateur
