@@ -5,12 +5,11 @@ from datetime import datetime
 import pytest
 
 from unittest.mock import patch
-
-from utils.reset_database import ResetDatabase
 from utils.securite import hash_password
 
+from utils.reset_database import ResetDatabase
+
 from dao.utilisateur_dao import UtilisateurDao
-from business_object.Utilisateur import Utilisateur
 from model.utilisateur_models import UtilisateurModelOut, UtilisateurModelIn
 
 
@@ -123,12 +122,40 @@ def test_authentificate():
     """ Permet à l'utilisateur de s'authentifier"""
 
     # GIVEN
-    id_utilisateur = 678
-    mdp = "Mdpexemple35"
+    email = "bob.martin@email.com"
+    mdp = "mdpBob123"  # est ce qu'il faut faire le test avec le mdp hashé ?
 
     # WHEN
-    utilisateur = UtilisateurDao().authentificate(id_utilisateur,
-                                                  hash_password(mdp, id_utilisateur))
+    utilisateur = UtilisateurDao().authentificate(email, mdp)
 
     # THEN
-    assert isinstance(utilisateur, Utilisateur)
+    assert utilisateur is not None
+    assert isinstance(utilisateur, UtilisateurModelOut)
+
+
+def test_change_password():
+    """Met à jour le mot de passe"""
+
+    # GIVEN
+    dao = UtilisateurDao()
+    email = "bob.martin@email.com"
+    ancien_mdp = "mdpBob123"
+    nouveau_mdp = "mdpBBob123"
+
+    utilisateur = dao.authentificate(email, ancien_mdp)
+    assert utilisateur is not None, f"Impossible de s'authentifier avec {email}"
+
+    # WHEN 
+    modification_ok = dao.change_password(utilisateur.id_utilisateur, nouveau_mdp)
+
+    # THEN
+    assert modification_ok is True
+
+    # Vérifier que l'ancien mot de passe ne fonctionne plus
+    utilisateur_ancien = dao.authentificate(email, ancien_mdp)
+    assert utilisateur_ancien is None, "L'ancien mot de passe devrait être invalide"
+
+    # Vérifier que le nouveau mot de passe fonctionne
+    utilisateur_apres = dao.authentificate(email, nouveau_mdp)
+    assert utilisateur_apres is not None, "Le nouveau mot de passe devrait fonctionner"
+    assert utilisateur_apres.id_utilisateur == utilisateur.id_utilisateur

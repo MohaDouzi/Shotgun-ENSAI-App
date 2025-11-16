@@ -25,7 +25,7 @@ def test_find_by_user():
     """ Récupère la liste des réservations faites par un utilisateur donné"""
 
     # GIVEN
-    fk_utilisateur = 1 
+    fk_utilisateur = 1
 
     # WHEN
     reservations = ReservationDao().find_by_user(fk_utilisateur)
@@ -39,7 +39,14 @@ def test_find_by_user():
 
 def test_find_by_event():
     """Récupère les réservations faites pour un événement donné """
-# Mohamed tu peux faire cette fonction si tu veux essayer
+    # GIVEN
+    id_evenement = 1
+
+    # WHEN
+    reservations = ReservationDao().find_by_event(id_evenement)
+
+    # THEN
+    assert reservations is not None
 
 
 def test_find_by_id():
@@ -106,3 +113,44 @@ def test_delete():
 
     # THEN
     assert suppression_ok
+
+
+def test_count_by_event():
+    """Retourne le nombre de réservations pour un événement."""
+
+    # GIVEN
+    id_event = 2
+
+    # WHEN
+    reservations = ReservationDao().count_by_event(id_event)
+
+    # THEN
+    assert reservations is not None
+
+
+def test_exists_for_user_and_event_ok():
+    """Verifie si un certain utilisateur a déjà réservé un événement précis."""
+
+    # GIVEN
+    id_user = 3
+    id_event = 3
+
+    # WHEN
+    reservations = ReservationDao().exists_for_user_and_event(id_user, id_event)
+
+    # THEN
+    assert reservations is not None
+
+
+def test_exists_for_user_and_event_pas_ok():
+    """Verifie si un certain utilisateur N'a PAS réservé un événement précis"""
+
+    # GIVEN
+    id_user = 3
+    id_event = 2
+
+    # WHEN
+    reservations = ReservationDao().exists_for_user_and_event(id_user, id_event)
+
+    # THEN
+    assert reservations is False  # Il n'y a pas de réservation
