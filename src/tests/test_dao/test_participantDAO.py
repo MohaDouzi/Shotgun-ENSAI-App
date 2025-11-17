@@ -121,7 +121,7 @@ def test_authentificate():
     mdp = "mdpAlice123"
 
     # WHEN
-    participant = ParticipantDao().authentificate(email, mdp)
+    participant = ParticipantDao().authenticate(email, mdp)
 
     # THEN
     assert participant is not None
