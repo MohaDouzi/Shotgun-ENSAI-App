@@ -91,6 +91,20 @@ class ReservationDao:
 
         return ReservationModelOut(**r) if r else None
     
+    def count_by_event(self, id_evenement: int) -> int:
+        """
+        Compte le nombre total d'inscrits (réservations) pour un événement.
+        """
+        query = "SELECT COUNT(*) FROM reservation WHERE fk_evenement = %(id)s"
+        
+        with DBConnection().getConnexion() as con:
+            with con.cursor() as curs:
+                curs.execute(query, {"id": id_evenement})
+                result = curs.fetchone()
+        
+        # result est un tuple (ex: (5,)), on prend le premier élément
+        return result[0] if result else 0
+    
     def count_bus_taken(self, id_evenement: int, direction: str) -> int:
         """
         Compte combien de réservations ont pris l'option bus pour une direction.

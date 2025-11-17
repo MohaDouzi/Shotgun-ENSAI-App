@@ -29,6 +29,13 @@ class ReservationService:
             raise ValueError(f"Aucune réservation trouvée avec l'id {id_reservation}.")
         return reservation
     
+    def get_nb_inscrits_evenement(self, id_evenement: int) -> int:
+        """
+        Récupère le nombre total d'inscrits pour un événement.
+        (Utilisé pour vérifier la capacité du *lieu*).
+        """
+        return self.dao.count_by_event(id_evenement)
+    
     def get_nb_places_bus_prises(self, id_evenement: int, direction: str) -> int:
         """Renvoie le nombre de places de bus déjà réservées."""
         return self.dao.count_bus_taken(id_evenement, direction)

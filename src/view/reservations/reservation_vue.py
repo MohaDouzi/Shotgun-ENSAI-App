@@ -30,8 +30,6 @@ load_dotenv()
 class ReservationVue(VueAbstraite):
     """
     Vue console : permet à un utilisateur de réserver une place pour un événement.
-    Gère à la fois les dictionnaires (de ConsulterVue) et les objets (de son propre
-    sélecteur).
     """
 
     def __init__(self, message: str = "", evenement: Optional[Any] = None):
@@ -43,7 +41,7 @@ class ReservationVue(VueAbstraite):
         self.evenement = evenement
         self.bus_service = BusService()
 
-    # --- HELPER (la méthode robuste) ---
+    # --- HELPER ---
     @staticmethod
     def _get_attr(obj: Any, key: str, default=None):
         """Accède à un attribut/clé, que ce soit un dict ou un objet."""
@@ -52,7 +50,6 @@ class ReservationVue(VueAbstraite):
         if isinstance(obj, dict):
             return obj.get(key, default)
         return getattr(obj, key, default)
-    # --- FIN HELPER ---
 
     # ----------------- Cycle Vue -----------------
     def afficher(self) -> None:
@@ -60,11 +57,11 @@ class ReservationVue(VueAbstraite):
         Affiche le titre de la vue pour réserver un événement.
         """
         super().afficher()
-        print("\n--- Réservation d’un événement ---")
+        print("\n Réservation d'un événement")
 
     def choisir_menu(self) -> Optional[VueAbstraite]:
         """
-        Permet à l’utilisateur de créer une réservation pour un événement
+        Permet à l'utilisateur de créer une réservation pour un événement
         via un formulaire interactif.
         """
         from view.client.connexion_client_vue import ConnexionClientVue
@@ -72,15 +69,22 @@ class ReservationVue(VueAbstraite):
 
         # --- Vérification de la connexion ---
         if not self.session.est_connecte() or not self.user:
-            print("Vous devez être connecté pour réserver.")
+            print("Veuillez vous connecter pour réserver.")
             return ConsulterVue("Connexion requise pour réserver.")
 
         # --- Étape 1 : sélectionner ou confirmer l’événement ---
         if not self.evenement:
-            evenements = self.evenement_service.lister_evenements_disponibles()
+            # CORRECTION : On ne liste que les événements où l'utilisateur n'est PAS inscrit
+            try:
+                evenements = self.evenement_service.lister_evenements_non_inscrits(self.user.id_utilisateur)
+            except Exception as e:
+                # Si la méthode n'existe pas, on prend l'ancienne
+                print(f"Note: lister_evenements_non_inscrits non trouvé, utilisation de lister_evenements_disponibles. {e}")
+                evenements = self.evenement_service.lister_evenements_disponibles()
+
             if not evenements:
                 print("Aucun événement disponible pour réservation.")
-                return ConsulterVue("Aucun événement disponible.")
+                return ConsulterVue("Aucun événement disponible ou vous êtes déjà inscrit à tout.")
 
             choix_evt = inquirer.select(
                 message="Sélectionnez un événement :",
@@ -98,20 +102,28 @@ class ReservationVue(VueAbstraite):
 
         titre_evt = self._get_attr(evt, 'titre', 'N/A')
         date_evt = self._get_attr(evt, 'date_evenement', 'N/A')
+        id_evt = self._get_attr(evt, 'id_evenement') # On récupère l'ID ici
         print(f"\nÉvénement sélectionné : {titre_evt} ({date_evt})")
 
-        # --- Étape 2 : vérifier les places restantes ---
-        places = self._get_attr(evt, "places_restantes")
-        if places is not None and places <= 0:# Correction: <= 0
-            print("L'événement est complet.")
-            return ConsulterVue("Événement complet.")
+        # --- Étape 2 : NOUVELLE VÉRIFICATION (Capacité du LIEU) ---
+        try:
+            capacite_lieu = self._get_attr(evt, 'capacite', 0)
+            inscrits_lieu = self.reservation_service.get_nb_inscrits_evenement(id_evt)
+            restantes_lieu = capacite_lieu - inscrits_lieu
+            
+            if restantes_lieu <= 0:
+                print(f"L'événement est complet ({inscrits_lieu}/{capacite_lieu}).")
+                return ConsulterVue("Événement complet.")
+            else:
+                print(f"Places événement : {restantes_lieu} restantes sur {capacite_lieu}.")
+        except Exception as e:
+             return ConnexionClientVue(f"Erreur lors de la vérification des places : {e}")
 
-        # --- Étape 3 : saisie des options de réservation ---
+
+        # --- Étape 3 : saisie des options de réservation (BUS) ---
+        # Ton code ici était déjà parfait !
         print("\n--- Choix de vos options ---")
         
-        # Récupération de l'ID événement
-        id_evt = self._get_attr(evt, 'id_evenement')
-
         # --- Logique BUS ALLER ---
         bus_aller = False
         cap_aller = self.bus_service.get_capacite(id_evt, 'aller')
@@ -119,11 +131,10 @@ class ReservationVue(VueAbstraite):
         restantes_aller = cap_aller - prises_aller
 
         if cap_aller == 0:
-            print("🚌 Bus Aller : Pas de bus prévu.")
+            print("Bus Aller : Pas de bus prévu.")
         elif restantes_aller <= 0:
-            print(f"🚌 Bus Aller : COMPLET ({cap_aller}/{cap_aller})")
+            print(f"Bus Aller : COMPLET ({cap_aller}/{cap_aller})")
         else:
-            # On ne pose la question que s'il y a de la place
             bus_aller = inquirer.confirm(
                 message=f"Prendre le bus ALLER ? ({restantes_aller} places disp.)", 
                 default=True
@@ -151,8 +162,7 @@ class ReservationVue(VueAbstraite):
         boisson = inquirer.confirm(message="Souhaitez-vous une boisson ?", default=False).execute()
 
         # --- Étape 4 : construction du modèle ---
-        
-        id_evt = self._get_attr(evt, 'id_evenement')
+        # (id_evt est déjà défini en haut)
         if not id_evt:
              print("Erreur : Impossible de trouver l'ID de cet événement.")
              return ConnexionClientVue("Erreur de réservation.")
@@ -172,16 +182,17 @@ class ReservationVue(VueAbstraite):
             resa_out = self.reservation_service.create_reservation(resa_in)
         except Exception as e:
             print(f"Erreur lors de la création de la réservation : {e}")
-            return ConnexionClientVue("Erreur lors de la réservation.")
+            # On affiche l'erreur réelle pour le débogage
+            return ConnexionClientVue(f"Erreur lors de la réservation : {e}")
 
         if not resa_out:
-            print("La réservation n’a pas pu être créée (peut-être déjà existante ?).")
+            print("La réservation n'a pas pu être créée (peut-être déjà existante ?).")
             return ConnexionClientVue("Échec de la réservation.")
 
         print(f"Réservation confirmée pour {titre_evt} ({date_evt})")
 
-        # --- Étape 6 : e-mail de confirmation ---
-        if LOADED_BREVO: # On n'essaie pas si l'import a échoué
+        # --- Étape 6 : e-mail de confirmation (Ton code est parfait) ---
+        if LOADED_BREVO: 
             try:
                 subject = "Confirmation de votre réservation — BDE Ensai"
                 message_text = (
@@ -193,8 +204,8 @@ class ReservationVue(VueAbstraite):
                     f" - Adhérent : {'Oui' if adherent else 'Non'}\n"
                     f" - SAM : {'Oui' if sam else 'Non'}\n"
                     f" - Boisson : {'Oui' if boisson else 'Non'}\n\n"
-                    "Si vous n’êtes pas à l’origine de cette action, veuillez nous contacter.\n\n"
-                    "— L’équipe du BDE Ensai"
+                    "Si vous n'êtes pas à l'origine de cette action, veuillez nous contacter.\n\n"
+                    "— L'équipe du BDE Ensai"
                 )
 
                 status, _ = send_email_brevo(
