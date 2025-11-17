@@ -207,7 +207,7 @@ class ParticipantDao:
                 return curs.rowcount > 0
 
     # ---------- AUTH ----------
-    def authentificate(self, email: str, mot_de_passe: str) -> Optional[ParticipantModelOut]:
+    def authenticate(self, email: str, mot_de_passe: str) -> Optional[ParticipantModelOut]:
         """
         Authentifie un participant par email/mot de passe.
         """
