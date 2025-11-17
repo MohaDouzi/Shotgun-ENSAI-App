@@ -27,6 +27,26 @@ class CommentaireDao:
                 row = curs.fetchone()
         
         return CommentaireModelOut(**row) if row else None
+    
+    def find_all_by_event_id(self, id_evenement: int) -> list:
+        """
+        Récupère tous les commentaires liés à un événement (via la table reservation).
+        Renvoie aussi le nom/prénom de l'auteur.
+        """
+        query = """
+            SELECT c.note, c.avis, u.prenom, u.nom, c.date_commentaire
+            FROM commentaire c
+            JOIN reservation r ON c.fk_reservation = r.id_reservation
+            JOIN utilisateur u ON c.fk_utilisateur = u.id_utilisateur
+            WHERE r.fk_evenement = %(id_evt)s
+            ORDER BY c.date_commentaire DESC
+        """
+        params = {"id_evt": id_evenement}
+
+        with DBConnection().getConnexion() as con:
+            with con.cursor() as curs:
+                curs.execute(query, params)
+                return curs.fetchall()
 
     def create(self, comm_in: CommentaireModelIn) -> Optional[CommentaireModelOut]:
         """Crée un nouveau commentaire."""

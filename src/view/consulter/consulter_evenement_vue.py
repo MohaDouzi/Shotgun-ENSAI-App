@@ -102,21 +102,29 @@ class ConsulterVue(VueAbstraite):
                 input("\n(Entrée) pour continuer...")
                 return self
 
-           # ---------- 3. Formatage (CORRIGÉ) ----------
+           # ---------- 3. Formatage ----------
             choices_events = []
             for ev in events:
-                # On utilise notre helper _get_attr
                 places_val = self._get_attr(ev, "places_restantes")
                 places_str = f"({places_val} places)" if places_val is not None else ""
+                
                 date_evt = self._get_attr(ev, "date_evenement", "")
                 titre = self._get_attr(ev, "titre", "N/A")
 
-                titre_affiche = f"{date_evt} | {titre} {places_str}"
+                # --- AJOUT DES AVIS ---
+                avg_note = self._get_attr(ev, "avg_note")
+                count_avis = self._get_attr(ev, "comment_count", 0)
+                
+                avis_str = ""
+                if avg_note is not None:
+                    avis_str = f" {avg_note:.1f}/5 ({count_avis} avis)"
+
+                titre_affiche = f"{date_evt} | {titre} {places_str}{avis_str}"
                 choices_events.append({"name": titre_affiche, "value": ev})
 
             choices_events.append({"name": "--- Retour ---", "value": None})
 
-            # ... (La partie 4: Sélection est OK) ...
+
             event_selectionne = inquirer.select(
                 message="Sélectionnez un événement pour voir les détails :",
                 choices=choices_events,
@@ -125,10 +133,9 @@ class ConsulterVue(VueAbstraite):
             if event_selectionne is None:
                 return self
 
-            # ---------- 5. On affiche les détails ----------
+            # ---------- 4. On affiche les détails ----------
             self._afficher_details_event(event_selectionne)
             
-            # On utilise notre helper _get_attr
             statut_evenement = self._get_attr(event_selectionne, 'statut')
             is_available = (statut_evenement == 'disponible en ligne')
 
@@ -165,17 +172,17 @@ class ConsulterVue(VueAbstraite):
             input("(Entrée) pour continuer...")
             return self
 
-    
     # --- FONCTION DÉTAILS ---
     def _afficher_details_event(self, ev: Any) -> None:
         """
-        Affiche une vue détaillée d'un événement (gère dict et objet).
+        Affiche une vue détaillée d'un événement (gère dict et objet)
+        ET affiche les derniers commentaires textuels.
         """
         print("\n" + "=" * 50)
-        print("          DÉTAIL DE L'ÉVÉNEMENT")
+        print("          DÉTAIL DE L'ÉVÉNEMENT")
         print("=" * 50)
 
-        # On utilise notre helper _get_attr pour tout
+        # --- Infos générales ---
         print(f"  Titre     : {self._get_attr(ev, 'titre', 'N/A')}")
         print(f"  Date      : {self._get_attr(ev, 'date_evenement', 'N/A')}")
         lieu = self._get_attr(ev, 'ville') or self._get_attr(ev, 'adresse') or 'N/A'
@@ -184,13 +191,56 @@ class ConsulterVue(VueAbstraite):
         
         places_restantes = self._get_attr(ev, 'places_restantes')
         if places_restantes is not None:
-             print(f"  Places    : {places_restantes}")
+             print(f"  Places    : {places_restantes}")
         else:
-             print(f"  Places    : (calcul non disponible sur cette vue)")
+             print(f"  Places    : (calcul non disponible sur cette vue)")
              
         print(f"  Statut    : {self._get_attr(ev, 'statut', 'N/A')}")
         print(f"  Catégorie : {self._get_attr(ev, 'categorie', 'N/A')}")
+
+        # Note Moyenne
+        avg_note = self._get_attr(ev, "avg_note")
+        count_avis = self._get_attr(ev, "comment_count", 0)
+        if avg_note is not None:
+            print(f"  Note Moy. : {avg_note:.1f}/5 ({count_avis} avis)")
+        else:
+            print("  Note Moy. : (Aucun avis pour le moment)")
+        
         print("-" * 50)
         print(f"  Description : \n  {self._get_attr(ev, 'description', 'Aucune description.')}")
-        
+        print("-" * 50)
+
+        if count_avis > 0:
+            print("  💬 DERNIERS AVIS :")
+            
+            try:
+                from service.commentaire_service import CommentaireService
+                com_service = CommentaireService()
+                
+                id_evt = self._get_attr(ev, 'id_evenement')
+                
+                avis_list = com_service.get_comments_for_event(id_evt)
+                
+                # On affiche les 3 premiers avis pour ne pas surcharger l'écran
+                for com in avis_list[:3]: 
+                    prenom = com.get('prenom', 'Anonyme')
+                    nom = com.get('nom', '')
+                    note = com.get('note')
+                    texte = com.get('avis') or ""
+                    
+                    # Formatage : "Alice D."
+                    auteur = f"{prenom} {nom[0]}." if nom else prenom
+                    note_str = f"{note}/5" if note else "-"
+                    
+                    print(f"    • {auteur} ({note_str}) : \"{texte}\"")
+                
+                # Si il y en a plus que 3
+                if len(avis_list) > 3:
+                    print(f"    ... et {len(avis_list) - 3} autres avis (voir stats).")
+
+            except Exception as e:
+                print(f"    (Impossible de charger le détail des avis : {e})")
+        else:
+            print("  💬 Aucun commentaire écrit pour l'instant.")
+
         print("=" * 50 + "\n")

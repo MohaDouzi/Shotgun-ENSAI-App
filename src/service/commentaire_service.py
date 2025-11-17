@@ -14,6 +14,10 @@ class CommentaireService:
     def get_comment_by_reservation(self, id_reservation: int) -> Optional[CommentaireModelOut]:
         """Récupère le commentaire lié à une réservation."""
         return self.dao.find_by_reservation_id(id_reservation)
+    
+    def get_comments_for_event(self, id_evenement: int) -> list:
+        """Récupère la liste des avis pour un événement."""
+        return self.dao.find_all_by_event_id(id_evenement)
 
     def create_comment(self, comm_in: CommentaireModelIn) -> Optional[CommentaireModelOut]:
         """Crée un nouveau commentaire."""

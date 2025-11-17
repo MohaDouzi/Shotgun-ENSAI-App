@@ -46,7 +46,7 @@ class ConnexionVue:
         except Exception as e:
             # Cas d’erreur technique (connexion DB, etc.)
             logger.exception("Erreur d'authentification: %s", e)
-            print("Erreur technique pendant l’authentification.")
+            print("Erreur technique pendant l'authentification.")
             return AccueilVue("Retour au menu principal")
 
         # --- Si succès : mise en session + feedback ---

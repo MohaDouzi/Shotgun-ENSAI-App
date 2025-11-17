@@ -209,7 +209,7 @@ class UtilisateurDao:
                 return curs.rowcount > 0
 
     # ---------- AUTH ----------
-    def authentificate(self, email: str, mot_de_passe: str) -> Optional[UtilisateurModelOut]:
+    def authenticate(self, email: str, mot_de_passe: str) -> Optional[UtilisateurModelOut]:
         """
         Vérifie email/mot de passe et retourne l'utilisateur si OK.
         """
