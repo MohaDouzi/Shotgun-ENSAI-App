@@ -1,10 +1,11 @@
 # dao/participant_dao.py
+from psycopg2.extras import RealDictCursor
 from typing import List, Optional
 import bcrypt
 
 from dao.db_connection import DBConnection
 from model.participant_models import ParticipantModelIn, ParticipantModelOut
-
+from utils.securite import hash_password, check_password
 
 class ParticipantDao:
     """
@@ -15,20 +16,11 @@ class ParticipantDao:
       mot_de_passe (hash), administrateur BOOLEAN, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     """
 
-    # ---------- Helpers mot de passe ----------
-    @staticmethod
-    def _hash_password(plain: str) -> str:
-        if isinstance(plain, str):
-            plain = plain.encode("utf-8")
-        return bcrypt.hashpw(plain, bcrypt.gensalt()).decode("utf-8")
+    def _hash_password(self, password: str) -> str:
+        return hash_password(password)
 
-    @staticmethod
-    def _check_password(plain: str, hashed: str) -> bool:
-        if isinstance(plain, str):
-            plain = plain.encode("utf-8")
-        if isinstance(hashed, str):
-            hashed = hashed.encode("utf-8")
-        return bcrypt.checkpw(plain, hashed)
+    def _check_password(self, password: str, hashed: str) -> bool:
+        return check_password(password, hashed)
 
     # ---------- READ ----------
     def find_all(self, limit: int = 100, offset: int = 0) -> List[ParticipantModelOut]:
@@ -217,13 +209,25 @@ class ParticipantDao:
             "WHERE email = %(email)s AND administrateur = FALSE"
         )
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
                 curs.execute(query, {"email": email})
                 r = curs.fetchone()
 
-        if r is None or not self._check_password(mot_de_passe, r["mot_de_passe"]):
+        if r is None:
+            print(f"\n[DEBUG AUTH] Utilisateur '{email}' non trouvé (ou est admin).")
+            return None
+        
+        hash_from_db = r["mot_de_passe"]
+        is_match = self._check_password(mot_de_passe, hash_from_db)
+        
+        print(f"\n[DEBUG AUTH] Email trouvé: {email}")
+        print(f"[DEBUG AUTH] Hash en BDD: {hash_from_db}")
+        print(f"[DEBUG AUTH] Le mot de passe correspond ? {is_match}")
+
+        if not is_match:
             return None
 
+        # Si le match est OK, on continue
         return ParticipantModelOut(
             id_utilisateur=r["id_utilisateur"],
             email=r["email"],

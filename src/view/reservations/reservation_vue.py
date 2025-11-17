@@ -7,10 +7,10 @@ from view.vue_abstraite import VueAbstraite
 from view.session import Session
 
 # Passage aux services
+from service.bus_service import BusService
 from service.reservation_service import ReservationService
 from service.evenement_service import EvenementService
 from model.reservation_models import ReservationModelIn
-# On importe EvenementModelOut pour les type hints
 try:
     from model.evenement_models import EvenementModelOut
 except ImportError:
@@ -40,7 +40,8 @@ class ReservationVue(VueAbstraite):
         self.user = self.session.utilisateur
         self.reservation_service = ReservationService()
         self.evenement_service = EvenementService()
-        self.evenement = evenement # Garde l'événement (dict ou objet)
+        self.evenement = evenement
+        self.bus_service = BusService()
 
     # --- HELPER (la méthode robuste) ---
     @staticmethod
@@ -107,8 +108,44 @@ class ReservationVue(VueAbstraite):
 
         # --- Étape 3 : saisie des options de réservation ---
         print("\n--- Choix de vos options ---")
-        bus_aller = inquirer.confirm(message="Souhaitez-vous un bus ALLER ?", default=True).execute()
-        bus_retour = inquirer.confirm(message="Souhaitez-vous un bus RETOUR ?", default=True).execute()
+        
+        # Récupération de l'ID événement
+        id_evt = self._get_attr(evt, 'id_evenement')
+
+        # --- Logique BUS ALLER ---
+        bus_aller = False
+        cap_aller = self.bus_service.get_capacite(id_evt, 'aller')
+        prises_aller = self.reservation_service.get_nb_places_bus_prises(id_evt, 'aller')
+        restantes_aller = cap_aller - prises_aller
+
+        if cap_aller == 0:
+            print("🚌 Bus Aller : Pas de bus prévu.")
+        elif restantes_aller <= 0:
+            print(f"🚌 Bus Aller : COMPLET ({cap_aller}/{cap_aller})")
+        else:
+            # On ne pose la question que s'il y a de la place
+            bus_aller = inquirer.confirm(
+                message=f"Prendre le bus ALLER ? ({restantes_aller} places disp.)", 
+                default=True
+            ).execute()
+
+        # --- Logique BUS RETOUR ---
+        bus_retour = False
+        cap_retour = self.bus_service.get_capacite(id_evt, 'retour')
+        prises_retour = self.reservation_service.get_nb_places_bus_prises(id_evt, 'retour')
+        restantes_retour = cap_retour - prises_retour
+
+        if cap_retour == 0:
+            print("Bus Retour : Pas de bus prévu.")
+        elif restantes_retour <= 0:
+            print(f"Bus Retour : COMPLET ({cap_retour}/{cap_retour})")
+        else:
+            bus_retour = inquirer.confirm(
+                message=f"Prendre le bus RETOUR ? ({restantes_retour} places disp.)", 
+                default=True
+            ).execute()
+
+        # --- Autres options (classique) ---
         adherent = inquirer.confirm(message="Êtes-vous adhérent ?", default=False).execute()
         sam = inquirer.confirm(message="Êtes-vous SAM ?", default=False).execute()
         boisson = inquirer.confirm(message="Souhaitez-vous une boisson ?", default=False).execute()

@@ -22,16 +22,21 @@ def hash_password(password: str, rounds: int = 12, salt: Optional[bytes] = None)
     return hashed.decode("utf-8")
 
 
-def verify_password(stored_hash: str, password: str) -> bool:
+def check_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Vérifie si le mot de passe correspond au hash bcrypt stocké.
-    Retourne True si OK, False sinon.
+    Vérifie si un mot de passe en clair correspond à un hash bcrypt.
     """
     try:
-        if isinstance(password, str):
-            password = password.encode("utf-8")
-        return bcrypt.checkpw(password, stored_hash.encode("utf-8"))
-    except Exception:
+        # Encode les deux en bytes pour la comparaison
+        password_bytes = plain_password.encode('utf-8')
+        hashed_bytes = hashed_password.encode('utf-8')
+        
+        # bcrypt.checkpw fait la comparaison sécurisée
+        return bcrypt.checkpw(password_bytes, hashed_bytes)
+    
+    except (ValueError, TypeError):
+        # Si le hash est malformé ou incompatible, bcrypt lève une erreur
+        print(f"Erreur: Le hash '{hashed_password}' n'est pas un format valide.")
         return False
 
 

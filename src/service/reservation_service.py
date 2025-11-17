@@ -28,6 +28,10 @@ class ReservationService:
         if not reservation:
             raise ValueError(f"Aucune réservation trouvée avec l'id {id_reservation}.")
         return reservation
+    
+    def get_nb_places_bus_prises(self, id_evenement: int, direction: str) -> int:
+        """Renvoie le nombre de places de bus déjà réservées."""
+        return self.dao.count_bus_taken(id_evenement, direction)
 
     # ---------- CREATE ----------
     def create_reservation(self, reservation_in: ReservationModelIn) -> ReservationModelOut:

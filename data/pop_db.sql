@@ -1,16 +1,16 @@
 -- 1) UTILISATEUR
 INSERT INTO utilisateur (nom, prenom, telephone, email, mot_de_passe, administrateur)
 VALUES
-('Dupont', 'Alice', '0601020304', 'alice.dupont@email.com', '$2b$12$kasVuw8LUvVK3anAskV40.ATzMUuUF5r9sRIuJc17BG4o2G/XKtyi', FALSE),
+('Dupont', 'Alice', '0601020304', 'alice.dupont@email.com', '$2b$12$fZE56Wsei2WahQDwQeGqTuk5UV0STIDWHmfckEYQMskVzKRCFFV7q', FALSE),
 ('Martin', 'Bob', '0605060708', 'bob.martin@email.com', '$2b$12$ZI9goAGUifVgF7dcZbNvgOjKED/Bfo193c5BDQW5RSaNxvkqu9QYa', TRUE),
-('Durand', 'Caroline', '0608091011', 'caroline.durand@email.com', 'mdpCaroline123', FALSE),
-('Petit', 'David', '0611121314', 'david.petit@email.com', 'mdpDavid123', FALSE);
+('Durand', 'Caroline', '0608091011', 'caroline.durand@email.com', '$2b$12$T5xxw5LIJUv1YuYuIedUguUpNA7MNpJDXIZCpDrl4fUViE2K3itMq', FALSE),
+('Petit', 'David', '0611121314', 'david.petit@email.com', '$2b$12$qYjWLSa6VwcE.Ex9MoABGOyaAQME3K7wZiO/VIFRSWjKnwFcxZvnC', FALSE);
 
--- 2) EVENEMENT (avant BUS, à cause de la FK dans BUS)
+-- 2) EVENEMENT
 INSERT INTO evenement (fk_utilisateur, titre, adresse, ville, date_evenement, description, capacite, categorie, statut)
 VALUES
 (1, 'Conférence Tech', '10 Rue de Paris', 'Lyon', '2025-11-30', 'Événement sur les nouvelles technologies.', 30, 'Technologie', 'pas encore finalisé'),
-(2, 'Salon de l’Art', '5 Avenue de Nice', 'Nice', '2025-12-01', 'Exposition d’art contemporain.', 50, 'Art', 'pas encore finalisé'),
+(2, 'Salon de l’Art', '5 Avenue de Nice', 'Nice', '2025-12-01', 'Exposition art contemporain.', 50, 'Art', 'pas encore finalisé'),
 (3, 'Match de Football', 'Stade National', 'Bruxelles', '2025-12-02', 'Rencontre sportive locale.', 40, 'Sport', 'pas encore finalisé'),
 (4, 'Festival de Musique', 'Parc Central', 'Toulouse', '2025-12-03', 'Concert en plein air.', 60, 'Musique', 'pas encore finalisé');
 

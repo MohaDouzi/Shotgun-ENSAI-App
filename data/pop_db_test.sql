@@ -1,10 +1,17 @@
 -- 1) UTILISATEUR
 INSERT INTO utilisateur (nom, prenom, telephone, email, mot_de_passe, administrateur)
 VALUES
-('Dupont', 'Alice', '0601020304', 'alice.dupont@email.com', '$2b$12$/px.xnw.CVDEBCVzNn/tleT2B3AStNTpXpOPkGOwrNQ3GrX7.lfrm', FALSE),
+('Dupont', 'Alice', '0601020304', 'alice.dupont@email.com', '$2b$12$fZE56Wsei2WahQDwQeGqTuk5UV0STIDWHmfckEYQMskVzKRCFFV7q', FALSE),
 ('Martin', 'Bob', '0605060708', 'bob.martin@email.com', '$2b$12$ZI9goAGUifVgF7dcZbNvgOjKED/Bfo193c5BDQW5RSaNxvkqu9QYa', TRUE),
-('Durand', 'Caroline', '0608091011', 'caroline.durand@email.com', 'mdpCaroline123', FALSE),
-('Petit', 'David', '0611121314', 'david.petit@email.com', 'mdpDavid123', FALSE);
+('Durand', 'Caroline', '0608091011', 'caroline.durand@email.com', '$2b$12$T5xxw5LIJUv1YuYuIedUguUpNA7MNpJDXIZCpDrl4fUViE2K3itMq', FALSE),
+('Petit', 'David', '0611121314', 'david.petit@email.com', '$2b$12$qYjWLSa6VwcE.Ex9MoABGOyaAQME3K7wZiO/VIFRSWjKnwFcxZvnC', FALSE);
+
+INSERT INTO utilisateur (id_utilisateur, nom, prenom, email, mot_de_passe, administrateur)
+VALUES
+(5, 'A_Supprimer', 'Test', 'delete@me.com', '$2b$12$qYjWLSa6VwcE.Ex9MoABGOyaAQME3K7wZiO/VIFRSWjKnwFcxZvnC', FALSE)
+ON CONFLICT (id_utilisateur) DO NOTHING;
+
+SELECT setval(pg_get_serial_sequence('utilisateur', 'id_utilisateur'), (SELECT MAX(id_utilisateur) FROM utilisateur));
 
 -- 2) EVENEMENT (avant BUS, à cause de la FK dans BUS)
 INSERT INTO evenement (fk_utilisateur, titre, adresse, ville, date_evenement, description, capacite, categorie, statut)
