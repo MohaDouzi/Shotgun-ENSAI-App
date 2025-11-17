@@ -126,7 +126,7 @@ def test_authentificate():
     mdp = "mdpBob123"  # est ce qu'il faut faire le test avec le mdp hashé ?
 
     # WHEN
-    utilisateur = UtilisateurDao().authentificate(email, mdp)
+    utilisateur = UtilisateurDao().authenticate(email, mdp)
 
     # THEN
     assert utilisateur is not None
@@ -142,7 +142,7 @@ def test_change_password():
     ancien_mdp = "mdpBob123"
     nouveau_mdp = "mdpBBob123"
 
-    utilisateur = dao.authentificate(email, ancien_mdp)
+    utilisateur = dao.authenticate(email, ancien_mdp)
     assert utilisateur is not None, f"Impossible de s'authentifier avec {email}"
 
     # WHEN 
@@ -152,10 +152,10 @@ def test_change_password():
     assert modification_ok is True
 
     # Vérifier que l'ancien mot de passe ne fonctionne plus
-    utilisateur_ancien = dao.authentificate(email, ancien_mdp)
+    utilisateur_ancien = dao.authenticate(email, ancien_mdp)
     assert utilisateur_ancien is None, "L'ancien mot de passe devrait être invalide"
 
     # Vérifier que le nouveau mot de passe fonctionne
-    utilisateur_apres = dao.authentificate(email, nouveau_mdp)
+    utilisateur_apres = dao.authenticate(email, nouveau_mdp)
     assert utilisateur_apres is not None, "Le nouveau mot de passe devrait fonctionner"
     assert utilisateur_apres.id_utilisateur == utilisateur.id_utilisateur

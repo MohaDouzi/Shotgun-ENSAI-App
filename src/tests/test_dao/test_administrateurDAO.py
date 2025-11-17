@@ -111,3 +111,46 @@ def test_delete():
 
     # THEN
     assert suppression_ok
+
+
+def test_authenticate():
+    """ Permet à l'utilisateur de s'authentifier"""
+
+    # GIVEN
+    email = "bob.martin@email.com"
+    mdp = "mdpBob123"  # est ce qu'il faut faire le test avec le mdp hashé ?
+
+    # WHEN
+    admin = AdministrateurDao().authenticate(email, mdp)
+
+    # THEN
+    assert admin is not None
+    assert isinstance(admin, AdministrateurModelOut)
+
+
+def test_change_password():
+    """Met à jour le mot de passe"""
+
+    # GIVEN
+    dao = AdministrateurDao()
+    email = "bob.martin@email.com"
+    ancien_mdp = "mdpBob123"
+    nouveau_mdp = "mdpBBob123"
+
+    admin = dao.authenticate(email, ancien_mdp)
+    assert admin is not None
+
+    # WHEN 
+    modification_ok = dao.change_password(admin.id_utilisateur, nouveau_mdp)
+
+    # THEN
+    assert modification_ok is True
+
+    # Vérifier que l'ancien mot de passe ne fonctionne plus
+    admin_ancien = dao.authenticate(email, ancien_mdp)
+    assert admin_ancien is None, "L'ancien mot de passe devrait être invalide"
+
+    # Vérifier que le nouveau mot de passe fonctionne
+    admin_apres = dao.authenticate(email, nouveau_mdp)
+    assert admin_apres is not None, "Le nouveau mot de passe devrait fonctionner"
+    assert admin_apres.id_utilisateur == admin.id_utilisateur
