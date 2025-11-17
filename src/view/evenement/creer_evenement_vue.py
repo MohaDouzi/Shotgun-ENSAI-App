@@ -11,9 +11,10 @@ from view.vue_abstraite import VueAbstraite
 from view.accueil.accueil_vue import AccueilVue
 from view.session import Session
 
-# Passage au service (plus de DAO direct)
+# Services et Modèles
 from service.evenement_service import EvenementService
 from model.evenement_models import EvenementModelIn
+from service.bus_service import BusService
 
 logger = logging.getLogger(__name__)
 
@@ -28,26 +29,27 @@ STATUTS = [
 class CreerEvenementVue(VueAbstraite):
     """
     Vue de création d'un événement (réservée aux administrateurs).
-    Utilise EvenementService.
+    Permet aussi de configurer les bus associés.
     """
 
     def __init__(self, message: str = "") -> None:
         super().__init__(message)
         self.service = EvenementService()
+        self.bus_service = BusService()
 
     def afficher(self) -> None:
         """
-        Affiche l’en-tête de la vue de création d’un événement.
+        Affiche l’en-tête de la vue de création d'un événement.
         """
         print("\n" + "-" * 50)
-        print("Création d’un événement".center(50))
+        print("Création d'un événement".center(50))
         print("-" * 50)
         if self.message:
             print(self.message)
 
     def choisir_menu(self) -> Optional[AccueilVue]:
         """
-        Gère la création d'un événement
+        Gère la création d'un événement et de ses bus.
         """
         sess = Session()
         user = sess.utilisateur
@@ -55,7 +57,7 @@ class CreerEvenementVue(VueAbstraite):
             print("Accès refusé : vous devez être administrateur.")
             return AccueilVue("Accès refusé")
 
-        # --- Saisie des champs ---
+        # Saisie des champs Événement
         try:
             titre = inquirer.text(
                 message="Titre :",
@@ -73,7 +75,6 @@ class CreerEvenementVue(VueAbstraite):
 
             description = inquirer.text(message="Description (optionnel) :").execute().strip() or None
 
-            # Correction de la saisie de la capacité (plus de ValueError)
             while True:
                 capacite_str = inquirer.text(
                     message="Capacité :",
@@ -81,9 +82,8 @@ class CreerEvenementVue(VueAbstraite):
                 ).execute().strip()
 
                 if not capacite_str:
-                    print("⚠️  La capacité est obligatoire.")
+                    print("La capacité est obligatoire.")
                     continue
-
                 try:
                     capacite = int(capacite_str)
                     break
@@ -100,7 +100,7 @@ class CreerEvenementVue(VueAbstraite):
 
             fk_utilisateur = user.id_utilisateur
 
-            # --- Construction du modèle d'entrée ---
+            # Construction du modèle d'entrée
             evt_in = EvenementModelIn(
                 fk_utilisateur=fk_utilisateur,
                 titre=titre,
@@ -127,7 +127,7 @@ class CreerEvenementVue(VueAbstraite):
             print("Erreur de saisie.")
             return AccueilVue("Création annulée — retour au menu principal")
 
-        # --- Appel au service (au lieu du DAO) ---
+        # Appel au service Événement
         try:
             evt_out = self.service.create_event(evt_in)
         except Exception as e:
@@ -135,7 +135,59 @@ class CreerEvenementVue(VueAbstraite):
             print("Erreur lors de la création en base (contrainte non respectée ?).")
             return AccueilVue("Échec création — retour au menu principal")
 
-        print(f"✅ Événement créé (id={evt_out.id_evenement}) : {evt_out.titre} — le {evt_out.date_evenement}")
+        print(f"Événement créé (id={evt_out.id_evenement}) : {evt_out.titre} — le {evt_out.date_evenement}")
+
+        print("\nConfiguration des Transports")
+        print("Indiquez la capacité (0 si pas de bus) et les détails (Arrêts, Horaires).")
+        
+        try:
+            # BUS ALLER
+            places_aller_str = inquirer.text(
+                message="Places Bus ALLER (0 = aucun) :", 
+                default="0",
+                validate=lambda x: x.isdigit()
+            ).execute()
+            places_aller = int(places_aller_str)
+            
+            desc_aller = ""
+            if places_aller > 0:
+                desc_aller = inquirer.text(
+                    message="Détails ALLER (ex: 'Départ arrêt Etangs à 20h30') :",
+                    validate=lambda x: len(x) > 3,
+                ).execute()
+
+            # --- BUS RETOUR ---
+            places_retour_str = inquirer.text(
+                message="Places Bus RETOUR (0 = aucun) :", 
+                default="0",
+                validate=lambda x: x.isdigit()
+            ).execute()
+            places_retour = int(places_retour_str)
+
+            desc_retour = ""
+            if places_retour > 0:
+                desc_retour = inquirer.text(
+                    message="Détails RETOUR (ex: 'Départ Boite à 04h00') :",
+                    validate=lambda x: len(x) > 3,
+                ).execute()
+
+            # --- ENREGISTREMENT VIA LE SERVICE BUS ---
+            if places_aller > 0 or places_retour > 0:
+                self.bus_service.ajouter_bus_evenement(
+                    id_evenement=evt_out.id_evenement, 
+                    places_aller=places_aller,
+                    desc_aller=desc_aller,
+                    places_retour=places_retour,
+                    desc_retour=desc_retour
+                )
+                print(f"Bus configurés avec succès.")
+            else:
+                print("Aucun bus configuré pour cet événement.")
+
+        except Exception as e:
+            print(f"Erreur lors de la configuration des bus : {e}")
+            print("L'événement est créé, mais sans bus.")
+        
         return AccueilVue("Événement créé — retour au menu principal")
 
 

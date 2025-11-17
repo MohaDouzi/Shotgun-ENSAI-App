@@ -1,56 +1,37 @@
-# dao/bus_dao.py
-from typing import List, Optional
+# src/dao/creneau_bus_dao.py
+from typing import List, Optional, Dict, Any
+from psycopg2.extras import RealDictCursor
 
 from dao.db_connection import DBConnection
-from model.creneau_bus import CreneauBus
+from model.creneauBus_models import CreneauBusModelIn, CreneauBusModelOut
 
 
 class CreneauBusDao:
     """
     DAO pour la gestion des créneaux de bus (table `bus`).
-    Schéma:
-      id_bus SERIAL PK
-      fk_evenement INT REFERENCES evenement(id_evenement) ON DELETE SET NULL
-      matricule VARCHAR(20)
-      nombre_places INT NOT NULL CHECK (nombre_places > 0)
-      direction VARCHAR(10) IN ('aller','retour') DEFAULT 'aller'
-      description VARCHAR(100) UNIQUE NOT NULL
     """
 
     # ------------- HELPERS -------------
     @staticmethod
-    def _row_to_model(row: dict) -> CreneauBus:
-        # Le DAO ne gère pas `inscrits` (logique métier) -> 0 par défaut ici
-        return CreneauBus(
-            id_bus=row.get("id_bus"),
-            fk_evenement=row.get("fk_evenement"),
-            matricule=row.get("matricule"),
-            description=row.get("description"),
-            nombre_places=row.get("nombre_places"),
-            direction=row.get("direction"),
-            inscrits=0,
-        )
+    def _row_to_model(row: dict) -> CreneauBusModelOut:
+        """Convertit une ligne SQL (dict) en objet Pydantic CreneauBusModelOut."""
+        # Pydantic est intelligent : il mappe les champs automatiquement
+        return CreneauBusModelOut(**row)
 
     # ------------- CREATE -------------
-    def create(self, bus: CreneauBus) -> Optional[CreneauBus]:
+    def create(self, bus_in: CreneauBusModelIn) -> Optional[CreneauBusModelOut]:
         """
-        Insère un bus et renvoie l'objet complété (id_bus, etc.).
+        Insère un bus à partir d'un CreneauBusModelIn.
         """
         query = """
             INSERT INTO bus (fk_evenement, matricule, nombre_places, direction, description)
             VALUES (%(fk_evenement)s, %(matricule)s, %(nombre_places)s, %(direction)s, %(description)s)
             RETURNING id_bus, fk_evenement, matricule, nombre_places, direction, description
         """
-        params = {
-            "fk_evenement": bus.fk_evenement,
-            "matricule": bus.matricule,
-            "nombre_places": bus.nombre_places,
-            "direction": bus.direction,
-            "description": bus.description,
-        }
+        params = bus_in.model_dump()
 
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
                 try:
                     curs.execute(query, params)
                     row = curs.fetchone()
@@ -60,68 +41,68 @@ class CreneauBusDao:
                     print(f"Erreur DAO (create bus): {e}")
                     return None
 
-        return self._row_to_model(row)
+        return self._row_to_model(row) if row else None
 
     # ------------- READ -------------
-    def find_by_id(self, id_bus: int) -> Optional[CreneauBus]:
-        query = """
-            SELECT id_bus, fk_evenement, matricule, nombre_places, direction, description
-            FROM bus
-            WHERE id_bus = %(id)s
-        """
+    def find_by_id(self, id_bus: int) -> Optional[CreneauBusModelOut]:
+        query = "SELECT * FROM bus WHERE id_bus = %(id)s"
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
                 curs.execute(query, {"id": id_bus})
                 row = curs.fetchone()
         return self._row_to_model(row) if row else None
 
-    def find_by_event(self, id_evenement: int) -> List[CreneauBus]:
-        query = """
-            SELECT id_bus, fk_evenement, matricule, nombre_places, direction, description
-            FROM bus
-            WHERE fk_evenement = %(id_evenement)s
-            ORDER BY id_bus
-        """
+    def find_by_event(self, id_evenement: int) -> List[CreneauBusModelOut]:
+        """Récupère tous les bus d'un événement."""
+        query = "SELECT * FROM bus WHERE fk_evenement = %(id_evenement)s ORDER BY id_bus"
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
                 curs.execute(query, {"id_evenement": id_evenement})
                 rows = curs.fetchall()
         return [self._row_to_model(r) for r in rows]
 
-    def find_by_description(self, description: str) -> Optional[CreneauBus]:
-        query = """
-            SELECT id_bus, fk_evenement, matricule, nombre_places, direction, description
-            FROM bus
-            WHERE description = %(description)s
-        """
+    def find_by_description(self, description: str) -> Optional[CreneauBusModelOut]:
+        query = "SELECT * FROM bus WHERE description = %(description)s"
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
                 curs.execute(query, {"description": description})
                 row = curs.fetchone()
         return self._row_to_model(row) if row else None
-
-    def find_all(self, limit: int = 100, offset: int = 0) -> List[CreneauBus]:
-        query = """
-            SELECT id_bus, fk_evenement, matricule, nombre_places, direction, description
-            FROM bus
-            ORDER BY id_bus
-            LIMIT %(limit)s OFFSET %(offset)s
-        """
+    
+    def exists_description(self, description: str) -> bool:
+        """Vérifie l'unicité de la description."""
+        return self.find_by_description(description) is not None
+    
+    def find_all(self, limit: int = 100, offset: int = 0) -> List[CreneauBusModelOut]:
+        query = "SELECT * FROM bus LIMIT %(limit)s OFFSET %(offset)s"
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
-                curs.execute(query, {"limit": max(0, limit), "offset": max(0, offset)})
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
+                curs.execute(query, {"limit": limit, "offset": offset})
                 rows = curs.fetchall()
         return [self._row_to_model(r) for r in rows]
 
-    # ------------- UPDATE -------------
-    def update(self, bus: CreneauBus) -> Optional[CreneauBus]:
+    # ------------- CALCULS (Capacité) -------------
+    def get_capacite_totale(self, id_evenement: int, direction: str) -> int:
         """
-        Met à jour un bus (tous champs sauf id).
-        Nécessite bus.id_bus.
+        Calcule la somme des places pour un événement et une direction.
         """
-        if bus.id_bus is None:
-            raise ValueError("id_bus requis pour update().")
+        query = """
+            SELECT SUM(nombre_places) as total
+            FROM bus
+            WHERE fk_evenement = %(id)s AND direction = %(dir)s
+        """
+        with DBConnection().getConnexion() as con:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
+                curs.execute(query, {"id": id_evenement, "dir": direction})
+                row = curs.fetchone()
+        
+        val = row.get('total') if row else 0
+        return int(val) if val else 0
 
+    # ------------- UPDATE / DELETE -------------
+    
+    def update(self, bus_in: CreneauBusModelIn, id_bus: int) -> Optional[CreneauBusModelOut]:
+        """Met à jour un bus."""
         query = """
             WITH updated AS (
                 UPDATE bus
@@ -135,17 +116,11 @@ class CreneauBusDao:
             )
             SELECT * FROM updated
         """
-        params = {
-            "id_bus": bus.id_bus,
-            "fk_evenement": bus.fk_evenement,
-            "matricule": bus.matricule,
-            "nombre_places": bus.nombre_places,
-            "direction": bus.direction,
-            "description": bus.description,
-        }
+        params = bus_in.model_dump()
+        params["id_bus"] = id_bus
 
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
                 try:
                     curs.execute(query, params)
                     row = curs.fetchone()
@@ -154,10 +129,10 @@ class CreneauBusDao:
                     con.rollback()
                     print(f"Erreur DAO (update bus): {e}")
                     return None
-
         return self._row_to_model(row) if row else None
 
-    def update_places(self, id_bus: int, nombre_places: int) -> Optional[CreneauBus]:
+
+    def update_places(self, id_bus: int, nombre_places: int) -> Optional[CreneauBusModelOut]:
         """
         Met à jour uniquement le nombre de places.
         """
@@ -171,7 +146,7 @@ class CreneauBusDao:
             SELECT * FROM updated
         """
         with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
                 try:
                     curs.execute(query, {"id_bus": id_bus, "nombre_places": nombre_places})
                     row = curs.fetchone()
@@ -180,35 +155,21 @@ class CreneauBusDao:
                     con.rollback()
                     print(f"Erreur DAO (update_places): {e}")
                     return None
-
         return self._row_to_model(row) if row else None
 
-    # ------------- DELETE -------------
     def delete(self, id_bus: int) -> bool:
         query = "DELETE FROM bus WHERE id_bus = %(id)s"
         with DBConnection().getConnexion() as con:
             with con.cursor() as curs:
                 curs.execute(query, {"id": id_bus})
+                con.commit()
                 return curs.rowcount > 0
-
-    # ------------- UTILS -------------
+    
     def count_for_event(self, id_evenement: int) -> int:
-        """
-        Nombre de bus rattachés à un événement.
-        """
+        """Nombre de bus rattachés à un événement."""
         query = "SELECT COUNT(*) AS c FROM bus WHERE fk_evenement = %(id)s"
         with DBConnection().getConnexion() as con:
             with con.cursor() as curs:
                 curs.execute(query, {"id": id_evenement})
                 row = curs.fetchone()
-        return int(row["c"]) if row else 0
-
-    def exists_description(self, description: str) -> bool:
-        """
-        Vérifie l'existence d'une description (contrainte UNIQUE).
-        """
-        query = "SELECT 1 FROM bus WHERE description = %(desc)s LIMIT 1"
-        with DBConnection().getConnexion() as con:
-            with con.cursor() as curs:
-                curs.execute(query, {"desc": description})
-                return curs.fetchone() is not None
+        return int(row[0]) if row else 0
