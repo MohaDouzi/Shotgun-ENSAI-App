@@ -114,43 +114,49 @@ def test_delete():
 
 
 def test_authenticate():
-    """ Permet à l'utilisateur de s'authentifier"""
+    """Permet à l'utilisateur de s'authentifier"""
 
     # GIVEN
     email = "bob.martin@email.com"
-    mdp = "mdpBob123"  # est ce qu'il faut faire le test avec le mdp hashé ?
+    mdp = "mdpBob123"  # Mot de passe en clair (sera vérifié contre le hash en BDD)
 
     # WHEN
     admin = AdministrateurDao().authenticate(email, mdp)
 
     # THEN
-    assert admin is not None
+    assert admin is not None, "L'authentification devrait réussir"
     assert isinstance(admin, AdministrateurModelOut)
+    assert admin.email == email
+    assert admin.administrateur is True
 
 
 def test_change_password():
-    """Met à jour le mot de passe"""
+    """Met à jour le mot de passe d'un administrateur"""
 
     # GIVEN
     dao = AdministrateurDao()
     email = "bob.martin@email.com"
     ancien_mdp = "mdpBob123"
-    nouveau_mdp = "mdpBBob123"
+    nouveau_mdp = "nouveauMdpBob456"
 
+    # Authentification initiale
     admin = dao.authenticate(email, ancien_mdp)
-    assert admin is not None
+    assert admin is not None, "L'administrateur devrait être authentifié"
 
-    # WHEN 
+    # WHEN - Changement du mot de passe
     modification_ok = dao.change_password(admin.id_utilisateur, nouveau_mdp)
 
     # THEN
-    assert modification_ok is True
+    assert modification_ok is True, "Le changement de mot de passe devrait réussir"
 
     # Vérifier que l'ancien mot de passe ne fonctionne plus
     admin_ancien = dao.authenticate(email, ancien_mdp)
     assert admin_ancien is None, "L'ancien mot de passe devrait être invalide"
 
     # Vérifier que le nouveau mot de passe fonctionne
-    admin_apres = dao.authenticate(email, nouveau_mdp)
-    assert admin_apres is not None, "Le nouveau mot de passe devrait fonctionner"
-    assert admin_apres.id_utilisateur == admin.id_utilisateur
+    admin_nouveau = dao.authenticate(email, nouveau_mdp)
+    assert admin_nouveau is not None, "Le nouveau mot de passe devrait fonctionner"
+    assert admin_nouveau.id_utilisateur == admin.id_utilisateur
+
+    # CLEANUP - Restaurer l'ancien mot de passe pour ne pas casser les autres tests
+    dao.change_password(admin.id_utilisateur, ancien_mdp)

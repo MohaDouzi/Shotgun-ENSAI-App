@@ -63,7 +63,7 @@ def test_create():
 
 
 def test_update():
-    """Met à jour un utilisateur"""
+    """Met à jour un événement"""
 
     # GIVEN
     new_transport = 2
@@ -79,7 +79,7 @@ def test_update():
 
 
 def test_delete():
-    """ Supprime un utilisateur """
+    """ Supprime un événement """
 
     # GIVEN
     dao = EvenementDao()

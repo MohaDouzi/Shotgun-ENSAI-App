@@ -131,7 +131,6 @@ class CreneauBusDao:
                     return None
         return self._row_to_model(row) if row else None
 
-
     def update_places(self, id_bus: int, nombre_places: int) -> Optional[CreneauBusModelOut]:
         """
         Met à jour uniquement le nombre de places.
@@ -164,7 +163,7 @@ class CreneauBusDao:
                 curs.execute(query, {"id": id_bus})
                 con.commit()
                 return curs.rowcount > 0
-    
+
     def count_for_event(self, id_evenement: int) -> int:
         """Nombre de bus rattachés à un événement."""
         query = "SELECT COUNT(*) AS c FROM bus WHERE fk_evenement = %(id)s"
