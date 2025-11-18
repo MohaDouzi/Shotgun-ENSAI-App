@@ -64,6 +64,7 @@ class ReservationVue(VueAbstraite):
         Permet à l'utilisateur de créer une réservation pour un événement
         via un formulaire interactif.
         """
+        from view.administrateur.connexion_admin_vue import ConnexionAdminVue
         from view.client.connexion_client_vue import ConnexionClientVue
         from view.consulter.consulter_evenement_vue import ConsulterVue
 
@@ -222,5 +223,12 @@ class ReservationVue(VueAbstraite):
             except Exception as exc:
                 print(f"Impossible d'envoyer l'e-mail de confirmation : {exc}")
 
-        # --- Étape 7 : retour au menu client ---
-        return ConnexionClientVue("Réservation effectuée avec succès.")
+        # --- Étape 7 : retour au menu (Client ou Admin) ---
+        
+        message_succes = "Réservation effectuée avec succès."
+
+        # On vérifie le statut de l'utilisateur en session
+        if self.user.administrateur:
+            return ConnexionAdminVue(message_succes)
+        else:
+            return ConnexionClientVue(message_succes)
