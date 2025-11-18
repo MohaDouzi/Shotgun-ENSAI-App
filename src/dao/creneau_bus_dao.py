@@ -15,7 +15,6 @@ class CreneauBusDao:
     @staticmethod
     def _row_to_model(row: dict) -> CreneauBusModelOut:
         """Convertit une ligne SQL (dict) en objet Pydantic CreneauBusModelOut."""
-        # Pydantic est intelligent : il mappe les champs automatiquement
         return CreneauBusModelOut(**row)
 
     # ------------- CREATE -------------

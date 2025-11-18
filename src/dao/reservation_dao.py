@@ -21,7 +21,7 @@ class ReservationDao:
     """
     # ---------- READ ----------
     def find_by_user(self, id_utilisateur: int) -> List[ReservationModelOut]:
-        """Récupère toutes les réservations d’un utilisateur donné."""
+        """Récupère toutes les réservations d'un utilisateur donné."""
         query = """
             SELECT r.id_reservation,
                    r.fk_utilisateur,
@@ -47,7 +47,7 @@ class ReservationDao:
         ]
 
     def find_by_event(self, id_evenement: int) -> List[ReservationModelOut]:
-        """Récupère toutes les réservations d’un événement donné."""
+        """Récupère toutes les réservations d'un événement donné."""
         query = """
             SELECT id_reservation,
                    fk_utilisateur,

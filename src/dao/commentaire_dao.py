@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 class CommentaireDao:
     """
     DAO pour la table 'commentaire'.
-    Gère les opérations CRUD (Create, Read, Update, Delete).
     """
 
     def find_by_reservation_id(self, id_reservation: int) -> Optional[CommentaireModelOut]:

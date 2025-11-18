@@ -227,7 +227,6 @@ class ParticipantDao:
         if not is_match:
             return None
 
-        # Si le match est OK, on continue
         return ParticipantModelOut(
             id_utilisateur=r["id_utilisateur"],
             email=r["email"],
