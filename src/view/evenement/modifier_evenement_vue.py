@@ -43,7 +43,7 @@ class ModifierEvenementVue(VueAbstraite):
         return cls()._afficher_impl()
 
     @classmethod
-    def choisir_menu(cls) -> Optional[AccueilVue]:
+    def choisir_menu(cls) -> Optional[VueAbstraite]:
         """Permet d'appeler ModifierEvenementVue.choisir_menu() sans instance."""
         return cls()._choisir_menu_impl()
 
@@ -57,10 +57,11 @@ class ModifierEvenementVue(VueAbstraite):
         print("Modification d’un événement".center(50))
         print("-" * 50)
 
-    def _choisir_menu_impl(self) -> Optional[AccueilVue]:
+    def _choisir_menu_impl(self) -> Optional[VueAbstraite]:        
         """
-        Gère la modification d’un événement.
+        Gère la modification d'un événement.
         """
+        from view.administrateur.connexion_admin_vue import ConnexionAdminVue
         sess = Session()
         user = sess.utilisateur
         if not sess.est_connecte() or not getattr(user, "administrateur", False):
@@ -77,18 +78,18 @@ class ModifierEvenementVue(VueAbstraite):
         except Exception as e:
             logger.exception("Erreur saisie ID: %s", e)
             print("ID invalide.")
-            return AccueilVue("Modification annulée — retour au menu principal")
+            return ConnexionAdminVue("Modification annulée — retour au menu principal")
 
         try:
             evt = self.service.get_event_by_id(id_evenement)
         except Exception as e:
             logger.exception("Erreur récupération événement: %s", e)
             print("Erreur technique lors de la recherche.")
-            return AccueilVue("Erreur technique — retour au menu principal")
+            return ConnexionAdminVue("Erreur technique — retour au menu principal")
 
         if evt is None:
             print(f"Aucun événement trouvé pour id={id_evenement}.")
-            return AccueilVue("Introuvable — retour au menu principal")
+            return ConnexionAdminVue("Introuvable — retour au menu principal")
 
         # --- Récapitulatif avant modification ---
         print("\nÉvénement courant :")
@@ -191,11 +192,11 @@ class ModifierEvenementVue(VueAbstraite):
                 msg = err.get("msg", "erreur")
                 print(f"   - {loc}: {msg}")
             logger.info("ValidationError modification événement", exc_info=ve)
-            return AccueilVue("Modification annulée — retour au menu principal")
+            return ConnexionAdminVue("Modification annulée — retour au menu principal")
         except Exception as e:
             logger.exception("Erreur de saisie: %s", e)
             print("Erreur de saisie.")
-            return AccueilVue("Modification annulée — retour au menu principal")
+            return ConnexionAdminVue("Modification annulée — retour au menu principal")
 
         # --- Appel du service pour mise à jour ---
         try:
@@ -203,14 +204,14 @@ class ModifierEvenementVue(VueAbstraite):
         except Exception as e:
             logger.exception("Erreur update événement: %s", e)
             print("Erreur lors de la mise à jour en base (contrainte ?).")
-            return AccueilVue("Échec modification — retour au menu principal")
+            return ConnexionAdminVue("Échec modification — retour au menu principal")
 
         if updated is None:
             print("Aucune ligne modifiée (événement introuvable ?).")
-            return AccueilVue("Échec modification — retour au menu principal")
+            return ConnexionAdminVue("Échec modification — retour au menu principal")
 
         print(f"Événement mis à jour (id={updated.id_evenement}) : {updated.titre} — date {updated.date_evenement}")
-        return AccueilVue("Événement modifié — retour au menu principal")
+        return ConnexionAdminVue("Événement modifié — retour au menu principal")
 
 
 # ---------- Helpers ----------

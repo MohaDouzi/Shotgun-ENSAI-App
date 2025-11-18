@@ -39,7 +39,7 @@ class CreerEvenementVue(VueAbstraite):
 
     def afficher(self) -> None:
         """
-        Affiche l’en-tête de la vue de création d'un événement.
+        Affiche l'en-tête de la vue de création d'un événement.
         """
         print("\n" + "-" * 50)
         print("Création d'un événement".center(50))
@@ -51,6 +51,8 @@ class CreerEvenementVue(VueAbstraite):
         """
         Gère la création d'un événement et de ses bus.
         """
+        from view.administrateur.connexion_admin_vue import ConnexionAdminVue
+
         sess = Session()
         user = sess.utilisateur
         if not sess.est_connecte() or not getattr(user, "administrateur", False):
@@ -188,7 +190,7 @@ class CreerEvenementVue(VueAbstraite):
             print(f"Erreur lors de la configuration des bus : {e}")
             print("L'événement est créé, mais sans bus.")
         
-        return AccueilVue("Événement créé — retour au menu principal")
+        return ConnexionAdminVue("Événement créé — retour au menu principal")
 
 
 def _valid_date(s: str) -> bool:
