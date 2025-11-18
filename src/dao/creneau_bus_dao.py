@@ -80,6 +80,19 @@ class CreneauBusDao:
                 curs.execute(query, {"limit": limit, "offset": offset})
                 rows = curs.fetchall()
         return [self._row_to_model(r) for r in rows]
+    
+    def find_by_event_id(self, id_evenement: int) -> list:
+        """
+        Récupère tous les bus (aller et retour) pour un événement donné.
+        """
+        query = "SELECT * FROM bus WHERE fk_evenement = %(id)s ORDER BY direction DESC"
+        
+        with DBConnection().getConnexion() as con:
+            with con.cursor(cursor_factory=RealDictCursor) as curs:
+                curs.execute(query, {"id": id_evenement})
+                buses = curs.fetchall()
+        
+        return [CreneauBusModelOut(**bus) for bus in buses]
 
     # ------------- CALCULS (Capacité) -------------
     def get_capacite_totale(self, id_evenement: int, direction: str) -> int:

@@ -1,4 +1,4 @@
-# view/consulter/consulter_vue.py
+# view/consulter/consulter_evenement_vue.py
 from typing import Optional, Any, List
 from datetime import date
 from InquirerPy import inquirer
@@ -7,6 +7,8 @@ from typing import Optional, Any, List
 from view.vue_abstraite import VueAbstraite
 from service.consultation_evenement_service import ConsultationEvenementService  # nouveau
 from view.reservations.reservation_vue import ReservationVue
+from service.reservation_service import ReservationService
+from service.bus_service import BusService
 
 
 class ConsulterVue(VueAbstraite):
@@ -18,7 +20,8 @@ class ConsulterVue(VueAbstraite):
 
     def __init__(self) -> None:
         super().__init__("CONSULTER")
-        self.service = ConsultationEvenementService()  # on passe par le service
+        self.service = ConsultationEvenementService()
+        self.bus_service = BusService()
 
     def afficher(self) -> None:
         super().afficher()
@@ -208,10 +211,38 @@ class ConsulterVue(VueAbstraite):
         
         print("-" * 50)
         print(f"  Description : \n  {self._get_attr(ev, 'description', 'Aucune description.')}")
+
+        print("-" * 50)
+        print("  TRANSPORT (HORAIRES/ARRÊTS)")
+        
+        try:
+            id_evt = self._get_attr(ev, 'id_evenement')
+            bus_list = self.bus_service.get_buses_for_event(id_evt) 
+
+            bus_aller = next((b for b in bus_list if self._get_attr(b, 'direction') == 'aller'), None)
+            bus_retour = next((b for b in bus_list if self._get_attr(b, 'direction') == 'retour'), None)
+
+            if bus_aller:
+                desc_aller = self._get_attr(bus_aller, 'description', 'Pas de description')
+                places_aller = self._get_attr(bus_aller, 'nombre_places', '?')
+                print(f"   ALLER  : {desc_aller} ({places_aller} places)")
+            else:
+                print("    ALLER  : Aucun bus prévu.")
+            
+            if bus_retour:
+                desc_retour = self._get_attr(bus_retour, 'description', 'Pas de description')
+                places_retour = self._get_attr(bus_retour, 'nombre_places', '?')
+                print(f"   RETOUR : {desc_retour} ({places_retour} places)")
+            else:
+                print("    RETOUR : Aucun bus prévu.")
+        
+        except Exception as e:
+            print(f"    (Impossible de charger les informations du bus : {e})")
+
         print("-" * 50)
 
         if count_avis > 0:
-            print("  💬 DERNIERS AVIS :")
+            print(" DERNIERS AVIS :")
             
             try:
                 from service.commentaire_service import CommentaireService
@@ -241,6 +272,6 @@ class ConsulterVue(VueAbstraite):
             except Exception as e:
                 print(f"    (Impossible de charger le détail des avis : {e})")
         else:
-            print("  💬 Aucun commentaire écrit pour l'instant.")
+            print(" Aucun commentaire écrit pour l'instant.")
 
         print("=" * 50 + "\n")
