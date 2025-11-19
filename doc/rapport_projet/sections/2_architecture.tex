@@ -1,0 +1,176 @@
+
+\chapter{Architecture générale}
+
+\chapter{Architecture générale}
+
+\section{Introduction}
+
+L'application a été conçue suivant une architecture modulaire et robuste, inspirée des approches couramment utilisées dans l’industrie logicielle.
+Le système repose sur une séparation claire entre :
+
+\begin{itemize}
+    \item les \textbf{vues} (interface en console),
+    \item les \textbf{services métier} (logique applicative),
+    \item les \textbf{DAO} (accès aux données),
+    \item la \textbf{base de données PostgreSQL},
+    \item des \textbf{composants externes} : envoi d’e-mails via l'API Brevo.
+\end{itemize}
+
+Cette structure a été choisie pour rendre l’application évolutive, testable et maintenable, tout en permettant d’ajouter facilement de nouvelles fonctionnalités (statistiques, rappels e-mail, front-end dans le futur, etc.).
+
+\section{Vue d’ensemble}
+
+La Figure~\ref{fig:uml-global} présente l’architecture générale de l’application.
+Elle illustre les interactions entre les différentes couches :
+
+\begin{itemize}
+    \item la \textbf{Vue} reçoit les actions de l'utilisateur ;
+    \item la \textbf{Vue} appelle un \textbf{Service} correspondant ;
+    \item le \textbf{Service} applique la logique métier ;
+    \item le \textbf{Service} utilise un \textbf{DAO} pour lire/écrire dans PostgreSQL ;
+    \item certains Services communiquent avec l’API \textbf{Brevo} ;
+    \item la \textbf{Base de données} assure persistance, cohérence et intégrité.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{figures/uml_global.png}
+\caption{Architecture générale de l'application}
+\label{fig:uml-global}
+\end{figure}
+
+\section{Organisation en couches}
+
+\subsection{Couches de présentation : les Vues}
+
+Les vues correspondent aux interfaces console de l'application.
+Elles sont centralisées dans le répertoire \texttt{view/}.
+Leur rôle est strictement limité à :
+
+\begin{itemize}
+    \item afficher des informations à l’utilisateur,
+    \item recueillir les valeurs saisies via InquirerPy (menus interactifs),
+    \item appeler le service approprié,
+    \item rediriger vers une autre vue après une action.
+\end{itemize}
+
+Les vues ne contiennent aucune logique métier, ce qui assure leur simplicité et leur testabilité.
+
+Par exemple :
+
+\begin{itemize}
+    \item \texttt{creer\_evenement\_vue.py} permet à un administrateur de créer un événement ;
+    \item \texttt{reservation\_vue.py} gère l’inscription d’un étudiant ;
+    \item \texttt{mes\_reservations\_vue.py} affiche les réservations personnelles ;
+    \item \texttt{modifier\_evenement\_vue.py} permet de mettre à jour un événement existant.
+\end{itemize}
+
+\subsection{Couche métier : les Services}
+
+La couche service encapsule toute la \textbf{logique métier}.
+Son rôle est essentiel car elle :
+
+\begin{itemize}
+    \item applique les règles internes (capacités des bus, unicité des réservations, formats des entrées, cohérence),
+    \item délègue l’accès aux données au DAO,
+    \item communique avec les APIs externes,
+    \item transforme les données pour les envoyer ou les afficher.
+\end{itemize}
+
+Chaque domaine possède son service :
+
+\begin{itemize}
+    \item \textbf{EvenementService} : création, mise à jour, listage, suppression.
+    \item \textbf{ReservationService} : gestion des inscriptions, code unique, envoi du mail de confirmation.
+    \item \textbf{ParticipantService} : comptes utilisateurs, authentification.
+    \item \textbf{BusService} : configuration et gestion des transports liés à un événement.
+\end{itemize}
+
+La logique métier reste ainsi parfaitement isolée et réutilisable.
+
+\subsection{Couche DAO : accès aux données}
+
+Les DAO (\textit{Data Access Objects}) exécutent les requêtes SQL et manipulent les objets de la base.
+Ils sont responsables de :
+
+\begin{itemize}
+    \item l’exécution de requêtes SQL PostgreSQL,
+    \item la conversion en objets Pydantic à la sortie,
+    \item la gestion de \texttt{commit/rollback},
+    \item la protection contre les injections SQL (via requêtes paramétrées).
+\end{itemize}
+
+Chaque table possède son DAO :
+
+\begin{itemize}
+    \item EvenementDao ;
+    \item ReservationDao ;
+    \item ParticipantDao ;
+    \item BusDao.
+\end{itemize}
+
+Le respect de la séparation \textbf{Service ↔ DAO} garantit une base solide pour l'évolution de l'application.
+
+\section{Structure de la base de données}
+
+La base est composée de plusieurs tables principales :
+
+\begin{itemize}
+    \item \textbf{utilisateur} : participants et administrateurs ;
+    \item \textbf{evenement} : description complète d’un événement ;
+    \item \textbf{transport} : informations spécifiques aux bus aller/retour ;
+    \item \textbf{reservation} : inscription d'un utilisateur à un événement, options choisies, code unique.
+\end{itemize}
+
+La modélisation suit les bonnes pratiques enseignées en 1A (formes normales) :
+pas de redondance, clés primaires artificielles, correspondances via clés étrangères, cohérence des contraintes.
+
+\section{Sécurité de l'application}
+
+L'application intègre plusieurs mécanismes de sécurité :
+
+\begin{itemize}
+    \item \textbf{Hashage des mots de passe} via bcrypt ;
+    \item \textbf{Isolation de la logique métier} dans les services ;
+    \item \textbf{Vérification systématique des rôles} (admin / participant) dans les vues ;
+    \item \textbf{Génération de codes uniques} pour chaque réservation ;
+    \item \textbf{Utilisation d’une API d’envoi d’e-mails} fiable et reconnue (Brevo) ;
+    \item \textbf{Requêtes SQL paramétrées} contre les injections.
+\end{itemize}
+
+L'ensemble respecte les bonnes pratiques d’une application universitaire et professionnelle.
+
+\section{Interaction avec l'API Brevo}
+
+Certaines fonctionnalités, notamment :
+
+\begin{itemize}
+    \item envoi du mail de confirmation d’inscription,
+    \item envoi du mail de modification de réservation,
+    \item envoi du mail d’annonce d’un nouvel événement,
+\end{itemize}
+
+nécessitent un accès externe via HTTP.
+
+Le service \texttt{email\_service} communique avec Brevo en envoyant un JSON contenant :
+
+\begin{itemize}
+    \item le destinataire,
+    \item le sujet,
+    \item le texte brut et/ou HTML,
+    \item la signature du BDE,
+    \item la clé API (dans le fichier \texttt{.env}).
+\end{itemize}
+
+\section{Synthèse}
+
+L'architecture respecte les principes de séparation des responsabilités et garantit :
+
+\begin{itemize}
+    \item une maintenance facilitée,
+    \item une évolutivité naturelle,
+    \item une robustesse vis-à-vis des erreurs,
+    \item une compatibilité immédiate avec un éventuel futur front-end.
+\end{itemize}
+
+Le chapitre suivant décrit en détail un processus central : l’inscription à un événement.

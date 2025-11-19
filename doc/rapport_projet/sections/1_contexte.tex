@@ -1,0 +1,117 @@
+
+\chapter{Contexte de l'application}
+
+\chapter{Contexte de l'application}
+
+\section{Introduction générale}
+
+La vie associative de l’ENSAI repose en partie sur l'organisation régulière
+d’événements étudiants tels que le Week-End d’Intégration (WEI), le Gala,
+les soirées étudiantes ou encore certaines sorties culturelles.
+Ces événements attirent chaque année plusieurs centaines d’étudiants.
+Toutefois, leur organisation logistique repose souvent sur des outils
+hétérogènes : formulaires Google, fichiers Excel partagés, inscriptions manuelles,
+ou encore des échanges informels via les réseaux sociaux.
+
+Ce mode de fonctionnement présente plusieurs limites :
+
+\begin{itemize}
+    \item \textbf{pas de suivi automatisé du nombre de places restantes ;}
+    \item \textbf{un risque d’erreurs élevé} (doublons, oublis, mauvaise saisie) ;
+    \item \textbf{une charge mentale importante pour les membres du BDE} ;
+    \item \textbf{aucune traçabilité centralisée} des réservations ;
+    \item \textbf{difficulté à envoyer des rappels ou confirmations personnalisées}.
+\end{itemize}
+
+Face à ces constats, il devient pertinent de mettre en place une application
+informatique centralisée, robuste et automatisée pour gérer l’intégralité du
+processus d’inscription à un événement.
+
+\section{Objectifs du projet}
+
+L’objectif du projet est de développer une application en Python permettant :
+
+\begin{enumerate}
+    \item la \textbf{gestion complète des événements} par les administrateurs ;
+    \item la \textbf{gestion des inscriptions} par les étudiants ;
+    \item la \textbf{gestion centralisée de la capacité des bus} aller et retour ;
+    \item la \textbf{génération automatique d’un code de réservation} sécurisé ;
+    \item l’\textbf{envoi automatisé d’e-mails via l’API Brevo} ;
+    \item la \textbf{visualisation en temps réel} des inscrits par évènement ;
+    \item la \textbf{modification et suppression} d’une réservation existante.
+\end{enumerate}
+
+Ces fonctionnalités permettent de couvrir l'ensemble des besoins opérationnels
+du BDE pour un événement classique, tout en améliorant l’expérience utilisateur
+des participants.
+
+\section{Utilisateurs de l'application}
+
+Le système gère deux types d’utilisateurs, chacun ayant un rôle distinct
+dans l’application :
+
+\begin{itemize}
+    \item \textbf{Les administrateurs} (membres du BDE) :
+    Ils créent les événements, configurent les bus, suivent les inscriptions,
+    gèrent les capacités, et peuvent modifier ou supprimer n'importe quelle
+    réservation.
+
+    \item \textbf{Les participants} (étudiants inscrits à l’ENSAI) :
+    Ils consultent les événements ouverts aux inscriptions, réservent un créneau
+    bus, reçoivent un e-mail de confirmation et peuvent modifier leur réservation.
+\end{itemize}
+
+Cette distinction est directement reflétée dans la base de données (champ
+\texttt{administrateur} dans la table \texttt{utilisateur}), dans les vues Python
+et dans les contrôles d’accès.
+
+\section{Données manipulées par l'application}
+
+La solution repose sur plusieurs familles de données :
+
+\subsection{Données internes}
+
+\begin{itemize}
+    \item informations sur les utilisateurs : nom, prénom, e-mail, mot de passe ;
+    \item informations sur les événements : titre, lieu, date, capacité globale ;
+    \item données de transport : nombre de places pour chaque bus aller/retour ;
+    \item réservations : date d’inscription, options choisies, code unique ;
+    \item suivi statistique : nombre d’inscrits, taux de remplissage par bus.
+\end{itemize}
+
+Toutes ces données sont stockées dans une base PostgreSQL normalisée,
+garantissant intégrité, cohérence et admissibilité scolaire (1NF, 2NF, 3NF).
+
+\subsection{Données externes (API Brevo)}
+
+L'application intègre un service externe : l'API d’envoi d’e-mails Brevo
+(précédemment SendinBlue).
+Cette API permet :
+
+\begin{itemize}
+    \item l'envoi automatique d'e-mails de confirmation ;
+    \item l’envoi d’e-mails d’alerte lors de la création d’un nouvel événement ;
+    \item l’envoi potentiel de relances de paiement (fonctionnalité optionnelle).
+\end{itemize}
+
+Les données envoyées à Brevo suivent un schéma JSON défini : destinataire,
+objet, contenu textuel, contenu HTML, nom de l’expéditeur, etc.
+Aucune donnée sensible n’est transmise (les mots de passe restent internes).
+
+\section{Synthèse}
+
+Cette application répond à un besoin réel du BDE et constitue une solution
+professionnelle pour gérer des événements complexes.
+
+Les problématiques couvertes incluent :
+
+\begin{itemize}
+    \item la gestion multi-utilisateurs avec rôles ;
+    \item la gestion des capacités en temps réel ;
+    \item la communication automatisée ;
+    \item la sécurité (mot de passe, cohérence DB, code unique) ;
+    \item la scalabilité : gestion de centaines d’inscriptions.
+\end{itemize}
+
+Le chapitre suivant présente l’architecture logicielle permettant de
+mettre en œuvre ces fonctionnalités.

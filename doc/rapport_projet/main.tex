@@ -1,0 +1,54 @@
+
+\documentclass[12pt]{report}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\begin{document}
+
+%--------------------------------------
+% Page de garde ENSAI
+%--------------------------------------
+\begin{titlepage}
+    \centering
+    {\Large \textbf{ENSAI — Projet Python 1A}}\\[1.5cm]
+    {\Huge \textbf{Rapport Final}}\\[0.5cm]
+    {\Large Application de gestion d'événements pour le BDE}\\[2cm]
+
+    \textbf{Auteurs :}\\
+    Groupe X\\[1cm]
+
+    \textbf{Tutrice :}\\
+    Raya Berova\\[2cm]
+
+    \vfill
+    {\large Année scolaire 2024–2025}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+\input{sections/1_contexte.tex}
+\input{sections/2_architecture.tex}
+\input{sections/3_processus.tex}
+\input{sections/4_stockage.tex}
+\input{sections/5_outils.tex}
+\input{sections/6_conclusion.tex}
+
+\appendix
+\chapter{Annexes UML}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/uml_classes.png}
+\caption{Diagramme UML des classes principales}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figures/uml_global.png}
+\caption{Vue générale de l'architecture}
+\end{figure}
+
+\end{document}
