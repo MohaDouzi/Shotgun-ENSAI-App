@@ -139,6 +139,8 @@ class CreerEvenementVue(VueAbstraite):
 
         print(f"Événement créé (id={evt_out.id_evenement}) : {evt_out.titre} — le {evt_out.date_evenement}")
 
+        print("Une notification a été envoyée à tous les participants (nouvel évenement).")
+
         print("\nConfiguration des Transports")
         print("Indiquez la capacité (0 si pas de bus) et les détails (Arrêts, Horaires).")
         

@@ -251,3 +251,22 @@ class ParticipantDao:
             with con.cursor() as curs:
                 curs.execute(query, params)
                 return curs.rowcount > 0
+
+    def find_all_emails(self) -> List[str]:
+        """
+        Retourne tous les emails des PARTICIPANTS (administrateur = FALSE).
+        """
+        query = (
+            "SELECT email FROM utilisateur "
+            "WHERE administrateur = FALSE "
+            "ORDER BY id_utilisateur"
+        )
+
+        with DBConnection().getConnexion() as con:
+            with con.cursor() as curs:
+                curs.execute(query)
+                rows = curs.fetchall()
+
+        # rows = [{'email': 'x'}, {'email': 'y'}] selon cursor_factory
+        return [r[0] if not isinstance(r, dict) else r["email"] for r in rows]
+    

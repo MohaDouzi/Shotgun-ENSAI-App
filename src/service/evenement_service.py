@@ -3,6 +3,9 @@ from typing import List, Optional
 from dao.evenement_dao import EvenementDao
 from model.evenement_models import EvenementModelIn, EvenementModelOut
 
+from service.participant_service import ParticipantService
+from utils.api_brevo import send_email_brevo
+
 
 class EvenementService:
     """
@@ -12,6 +15,8 @@ class EvenementService:
 
     def __init__(self):
         self.dao = EvenementDao()
+        #from service.participant_service import ParticipantService
+        self.participant_service = ParticipantService()
 
     # ---------- READ ----------
     def get_all_events(self, limit: int = 100, offset: int = 0) -> List[EvenementModelOut]:
@@ -47,7 +52,49 @@ class EvenementService:
         if evenement_in.capacite is None or evenement_in.capacite <= 0:
             raise ValueError("La capacité doit être un entier positif obligatoire.")
             
-        return self.dao.create(evenement_in)
+        # --- Création en base ---
+        evt_out = self.dao.create(evenement_in)
+
+        # ------------------------
+        # F08 - Notification email
+        # ------------------------
+        try:
+            emails = self.participant_service.get_all_participants_emails()
+
+            if not emails:
+                print("[F08] Aucun participant à notifier.")
+                return evt_out
+
+            subject = f"NOUVEL ÉVÉNEMENT — {evt_out.titre}"
+
+            message = (
+                f"Bonjour,\n\n"
+                f"Un nouvel événement vient d’être créé !\n\n"
+                f"Titre   : {evt_out.titre}\n"
+                f"Date    : {evt_out.date_evenement}\n"
+                f"Ville   : {evt_out.ville or '—'}\n"
+                f"Adresse : {evt_out.adresse or '—'}\n"
+                f"Statut  : {evt_out.statut}\n\n"
+                f"{evt_out.description or ''}\n\n"
+                f"L’événement est actuellement **{evt_out.statut}**.\n\n"
+                "— L’équipe du BDE Ensai"
+            )
+            envoyes = 0
+            for email in emails:
+                status, _ = send_email_brevo(
+                    to_email=email,
+                    subject=subject,
+                    message_text=message
+                )
+                if 200 <= status < 300:
+                    envoyes += 1
+
+            print(f"[F08] Notification envoyée à {envoyes}/{len(emails)} participant(s).")
+
+        except Exception as e:
+            print(f"[F08] Erreur lors de l’envoi des mails : {e}")
+
+        return evt_out
 
     # ---------- UPDATE ----------
     def update_event(self, evenement_out: EvenementModelOut) -> EvenementModelOut:
@@ -68,3 +115,4 @@ class EvenementService:
         if not existing:
             raise ValueError("Impossible de supprimer : événement introuvable.")
         return self.dao.delete(id_evenement)
+
