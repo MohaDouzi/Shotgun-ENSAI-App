@@ -56,6 +56,7 @@ class ResetDatabase(metaclass=Singleton):
 
                     cursor.execute(init_db_as_string)
                     cursor.execute(pop_db_as_string)
+                connection.commit()
 
             print(f"Schéma {schema} réinitialisé avec succès !\n")
         except Exception as e:

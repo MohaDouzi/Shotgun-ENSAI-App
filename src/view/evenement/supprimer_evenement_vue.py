@@ -25,7 +25,7 @@ class SupprimerEvenementVue(VueAbstraite):
     """
 
     def __init__(self) -> None:
-        super().__init__("Suppression d’un événement")
+        super().__init__("Suppression d'un événement")
         self.service = EvenementService()
 
     # ---------- WRAPPERS : autorisent l'appel sur la classe ----------
@@ -36,7 +36,7 @@ class SupprimerEvenementVue(VueAbstraite):
         return cls()._afficher_impl()
 
     @classmethod
-    def choisir_menu(cls) -> Optional[AccueilVue]:
+    def choisir_menu(cls) -> Optional[VueAbstraite]:        
         """Permet d'appeler SupprimerEvenementVue.choisir_menu() sans instance."""
         return cls()._choisir_menu_impl()
 
@@ -44,16 +44,18 @@ class SupprimerEvenementVue(VueAbstraite):
 
     def _afficher_impl(self) -> None:
         """
-        Affiche l’en-tête de la vue de suppression d’un événement.
+        Affiche l'en-tête de la vue de suppression d'un événement.
         """
         print("\n" + "-" * 50)
-        print("Suppression d’un événement".center(50))
+        print("Suppression d'un événement".center(50))
         print("-" * 50)
 
-    def _choisir_menu_impl(self) -> Optional[AccueilVue]:
+    def _choisir_menu_impl(self) -> Optional[VueAbstraite]:
         """
-        Gère la suppression d’un événement.
+        Gère la suppression d'un événement.
         """
+        from view.administrateur.connexion_admin_vue import ConnexionAdminVue
+
         sess = Session()
         user = sess.utilisateur
         if not sess.est_connecte() or not getattr(user, "administrateur", False):
@@ -70,7 +72,7 @@ class SupprimerEvenementVue(VueAbstraite):
         except Exception as e:
             logger.exception("Erreur saisie ID: %s", e)
             print("ID invalide.")
-            return AccueilVue("Suppression annulée — retour au menu principal")
+            return ConnexionAdminVue("Suppression annulée — retour au menu principal")
 
         # --- Récupération de l'événement (pour affichage/confirmation) ---
         try:
@@ -78,11 +80,11 @@ class SupprimerEvenementVue(VueAbstraite):
         except Exception as e:
             logger.exception("Erreur lecture événement: %s", e)
             print("Erreur lors de la récupération de l'événement.")
-            return AccueilVue("Échec suppression — retour au menu principal")
+            return ConnexionAdminVue("Échec suppression — retour au menu principal")
 
         if evt is None:
             print(f"Aucun événement trouvé pour id={id_evenement}.")
-            return AccueilVue("Introuvable — retour au menu principal")
+            return ConnexionAdminVue("Introuvable — retour au menu principal")
 
         # --- Récapitulatif ---
         print("\nÉvénement ciblé :")
@@ -103,7 +105,7 @@ class SupprimerEvenementVue(VueAbstraite):
 
         if not confirm:
             print("Suppression annulée par l'utilisateur.")
-            return AccueilVue("Suppression annulée — retour au menu principal")
+            return ConnexionAdminVue("Suppression annulée — retour au menu principal")
 
         # --- Suppression via service ---
         try:
@@ -111,11 +113,11 @@ class SupprimerEvenementVue(VueAbstraite):
         except Exception as e:
             logger.exception("Erreur suppression événement: %s", e)
             print(" Erreur lors de la suppression en base.")
-            return AccueilVue("Échec suppression — retour au menu principal")
+            return ConnexionAdminVue("Échec suppression — retour au menu principal")
 
         if not ok:
             print("Aucune ligne supprimée (événement introuvable ?).")
-            return AccueilVue("Échec suppression — retour au menu principal")
+            return ConnexionAdminVue("Échec suppression — retour au menu principal")
 
         print(f"Événement supprimé (id={id_evenement}).")
-        return AccueilVue("Événement supprimé — retour au menu principal")
+        return ConnexionAdminVue("Événement supprimé — retour au menu principal")

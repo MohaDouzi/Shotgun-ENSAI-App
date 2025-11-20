@@ -18,13 +18,10 @@ class ReservationDao:
       adherent BOOLEAN DEFAULT FALSE
       sam BOOLEAN DEFAULT FALSE
       boisson BOOLEAN DEFAULT FALSE
-      -- ❌ plus de contrainte UNIQUE(fk_utilisateur)
-      -- ✅ on gère la contrainte logique via exists_for_user_and_event()
     """
-
     # ---------- READ ----------
     def find_by_user(self, id_utilisateur: int) -> List[ReservationModelOut]:
-        """Récupère toutes les réservations d’un utilisateur donné."""
+        """Récupère toutes les réservations d'un utilisateur donné."""
         query = """
             SELECT r.id_reservation,
                    r.fk_utilisateur,
@@ -50,7 +47,7 @@ class ReservationDao:
         ]
 
     def find_by_event(self, id_evenement: int) -> List[ReservationModelOut]:
-        """Récupère toutes les réservations d’un événement donné."""
+        """Récupère toutes les réservations d'un événement donné."""
         query = """
             SELECT id_reservation,
                    fk_utilisateur,
@@ -93,6 +90,38 @@ class ReservationDao:
                 r = curs.fetchone()
 
         return ReservationModelOut(**r) if r else None
+    
+    def count_by_event(self, id_evenement: int) -> int:
+        """
+        Compte le nombre total d'inscrits (réservations) pour un événement.
+        """
+        query = "SELECT COUNT(*) FROM reservation WHERE fk_evenement = %(id)s"
+        
+        with DBConnection().getConnexion() as con:
+            with con.cursor() as curs:
+                curs.execute(query, {"id": id_evenement})
+                result = curs.fetchone()
+        
+        # result est un tuple (ex: (5,)), on prend le premier élément
+        return result[0] if result else 0
+    
+    def count_bus_taken(self, id_evenement: int, direction: str) -> int:
+        """
+        Compte combien de réservations ont pris l'option bus pour une direction.
+        direction: 'aller' ou 'retour'
+        """
+        colonne = "bus_aller" if direction == "aller" else "bus_retour"
+        
+        query = f"SELECT COUNT(*) as total FROM reservation WHERE fk_evenement = %(id)s AND {colonne} = TRUE"
+        
+        with DBConnection().getConnexion() as con:
+            with con.cursor() as curs:
+                curs.execute(query, {"id": id_evenement})
+                row = curs.fetchone()
+        
+        if isinstance(row, dict):
+            return row.get('total', 0)
+        return row[0] if row else 0
 
     # ---------- CREATE ----------
     def create(self, reservation_in: ReservationModelIn) -> Optional[ReservationModelOut]:

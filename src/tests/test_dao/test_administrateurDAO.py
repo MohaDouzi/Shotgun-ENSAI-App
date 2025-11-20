@@ -13,7 +13,7 @@ from dao.administrateur_dao import AdministrateurDao
 from model.utilisateur_models import AdministrateurModelIn, AdministrateurModelOut
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def setup_test_environment():
     """Initialisation des données de test"""
     with patch.dict(os.environ, {"SCHEMA": "projet_test_dao"}):
@@ -103,7 +103,7 @@ def test_delete():
 
     # GIVEN
     dao = AdministrateurDao()
-    admin = dao.find_by_id(5)
+    admin = dao.find_by_id(2) # ID 2 = Bob, qui EST un admin
     assert admin is not None
 
     # WHEN

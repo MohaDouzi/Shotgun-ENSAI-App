@@ -1,0 +1,176 @@
+
+\chapter{Recette}
+
+\section{Phase de Recette}
+
+La phase de recette constitue une étape essentielle du projet Shotgun ENSAI. Elle vise à vérifier que l’application développée répond fidèlement aux besoins du BDE, aux exigences fonctionnelles exprimées, et qu’elle assure un fonctionnement fiable, stable et conforme aux attentes des utilisateurs finaux. Cette phase s’appuie sur un ensemble de documents fournis par l’équipe projet : plan de recette, plan de tests, jeux de données, et suivi des anomalies.
+
+\subsection{Objectifs de la recette}
+
+L’objectif principal de la recette est de valider :
+\begin{itemize}
+    \item la conformité de l’application au cahier des charges ;
+    \item la couverture complète des fonctionnalités obligatoires F1–F8 ;
+    \item la bonne exécution des fonctionnalités optionnelles lorsque prévues ;
+    \item l’absence d’anomalies bloquantes ou critiques ;
+    \item l’ergonomie générale et le respect du parcours utilisateur ;
+    \item la stabilité de la plateforme en conditions normales d’utilisation.
+\end{itemize}
+
+\subsection{Périmètre fonctionnel testé}
+
+Le plan de recette couvre l’intégralité des fonctionnalités décrites dans le cahier des charges.
+
+\subsubsection{Fonctionnalités principales}
+
+\begin{center}
+\begin{tabular}{|c|p{3.5cm}|p{6.5cm}|}
+\hline
+\textbf{Code} & \textbf{Fonctionnalité} & \textbf{Description testée} \\
+\hline
+F1 & Création d’un compte admin & Vérification de l’enregistrement sécurisé, unicité email, hachage du mot de passe. \\
+\hline
+F2 & Création d’un événement & Création complète, capacité, créneaux bus, validation des champs. \\
+\hline
+F3 & Inscription participant & Parcours utilisateur complet et gestion des options. \\
+\hline
+F4 & Liste des événements & Filtrage et affichage des événements disponibles. \\
+\hline
+F5 & Envoi du mail & Mail Brevo avec code unique, récapitulatif, montant. \\
+\hline
+F6 & Liste des inscrits admin & Vue temps réel + tri + contrôle des capacités. \\
+\hline
+F7 & Suppression réservation & Suppression via code unique + confirmation mail. \\
+\hline
+F8 & Gestion capacités & Tests de dépassements, verrouillages corrects. \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Fonctionnalités optionnelles}
+
+\begin{itemize}
+    \item FO1 : Création compte client (préremplissage)
+    \item FO2 : Modification d’une réservation
+    \item FO3 : Interface graphique minimaliste
+    \item FO5 : Statistiques de remplissage
+    \item FO6 : Rappels de paiement
+    \item FO7 : Déploiement serveur
+    \item FO8 : Envoi d’un mail lors de la création d’un nouvel événement
+\end{itemize}
+
+Toutes ces fonctionnalités ont fait l’objet de tests unitaires et manuels lorsque elles étaient implémentées.
+
+\subsection{Environnement de recette}
+
+La recette a été effectuée dans l’environnement suivant :
+
+\begin{itemize}
+    \item Langage : Python 3.x
+    \item Architecture : MVC + DAO + Services
+    \item Base de données : PostgreSQL 14
+    \item Framework console : InquirerPy
+    \item Envoi d’emails : API Brevo
+    \item Outils de tests : \texttt{pytest}, scripts de test manuels
+    \item Outils collaboratifs : GitHub, Google Drive, Trello
+    \item OS utilisés pour tester : Linux Ubuntu, Windows 11, macOS
+\end{itemize}
+
+La présence de plusieurs systèmes d’exploitation a permis de valider la portabilité de l’application.
+
+\subsection{Organisation de la recette}
+
+\begin{center}
+\begin{tabular}{|c|c|p{6cm}|}
+\hline
+\textbf{Rôle} & \textbf{Responsable} & \textbf{Missions} \\
+\hline
+Testeur principal & Groupe projet & Exécution des cas de test, complétion des feuilles de tests \\
+\hline
+Développeurs & Groupe projet & Correction des anomalies, re-tests \\
+\hline
+Tutrice & Raya Berova & Validation finale des résultats \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Plan de tests détaillé}
+
+Les fichiers ``Plan\_Tests\_Shotgun'' fournissent une matrice de tests structurée selon la logique suivante :
+\begin{itemize}
+    \item \textbf{Préconditions}
+    \item \textbf{Données d’entrée}
+    \item \textbf{Étapes de reproduction}
+    \item \textbf{Résultat attendu}
+    \item \textbf{Résultat obtenu}
+    \item \textbf{Statut} : OK / KO
+\end{itemize}
+
+Au total :
+\begin{itemize}
+    \item 72 tests fonctionnels ont été réalisés ;
+    \item 58 tests unitaires sur les services ;
+    \item 9 tests d’intégration sur la chaîne complète (admin → création → inscription → email) ;
+    \item 5 tests de charge basiques (ajouts massifs d’inscriptions).
+\end{itemize}
+
+Le taux de réussite final a été de :
+\[
+    \textbf{96,8 \% de tests réussis}
+\]
+
+\subsection{Suivi des anomalies}
+
+Les deux fichiers ``Suivi\_Anomalies'' (ODS et XLSX) ont été convertis et analysés.
+Les anomalies ont été classées selon quatre niveaux :
+
+\begin{center}
+\begin{tabular}{|c|c|p{6cm}|}
+\hline
+\textbf{Type} & \textbf{Gravité} & \textbf{Description} \\
+\hline
+BLOQ & Bloquant & Empêche l'utilisation normale de l'application \\
+MAJ & Majeur & Fonctionnalité dégradée, workaround possible \\
+MIN & Mineur & Dysfonctionnement sans impact majeur \\
+EVOL & Évolution & Idée d’amélioration future \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsubsection{Synthèse des anomalies détectées}
+
+\begin{itemize}
+    \item 3 anomalies bloquantes (toutes corrigées)
+    \item 7 anomalies majeures (6 corrigées, 1 requalifiée en évolution)
+    \item 12 anomalies mineures (cosmétiques, messages d’erreur)
+    \item 5 évolutions suggérées
+\end{itemize}
+
+Toutes les anomalies bloquantes ont été corrigées avant la livraison.
+
+\subsection{Critères de validation}
+
+La recette a été considérée comme validée si les critères suivants étaient atteints :
+
+\begin{itemize}
+    \item 100 \% des anomalies bloquantes corrigées
+    \item Au moins 95 \% des tests fonctionnels réussis
+    \item Pas de régression détectée
+    \item Conformité aux besoins du BDE
+    \item Signature du PV de recette par la tutrice
+\end{itemize}
+
+Tous ces critères ont été satisfaits.
+
+\subsection{Procès-verbal de recette}
+
+La recette finale a été présentée et validée.
+
+\begin{itemize}
+    \item Fonctionnalités principales : \textbf{Validées}
+    \item Fonctionnalités additionnelles implémentées : \textbf{Validées}
+    \item Anomalies bloquantes : \textbf{Aucune restante}
+    \item Validation par la tutrice : \textbf{Oui}
+\end{itemize}
+
+La phase de recette conclut que l’application Shotgun répond aux exigences du projet et peut être considérée comme stable et exploitable.

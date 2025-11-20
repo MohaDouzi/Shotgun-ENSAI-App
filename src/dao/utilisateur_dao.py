@@ -15,7 +15,7 @@ class UtilisateurDao:
       mot_de_passe (hash), administrateur BOOLEAN, date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     """
 
-    # ---------- Helpers mot de passe ----------
+    # ---------- Helpers ----------
     @staticmethod
     def _hash_password(plain: str) -> str:
         if isinstance(plain, str):

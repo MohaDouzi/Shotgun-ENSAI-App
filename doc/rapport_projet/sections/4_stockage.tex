@@ -1,0 +1,218 @@
+
+\chapter{Système de stockage}
+
+\chapter{Système de stockage}
+
+\section{Introduction}
+
+Le système de stockage joue un rôle central dans l'application, car il garantit la
+cohérence des inscriptions, le respect des capacités des événements et la persistance des données.
+Ce chapitre présente l’architecture de la base de données PostgreSQL, les choix de modélisation effectués,
+ainsi que les interactions entre les DAO et la base de données.
+
+L’objectif du stockage est double :
+
+\begin{itemize}
+    \item assurer la \textbf{durabilité et la cohérence} des données malgré des opérations concurrentes ;
+    \item structurer les données de manière à éviter toute redondance ou anomalie.
+\end{itemize}
+
+\section{Technologie utilisée : PostgreSQL}
+
+PostgreSQL a été choisi pour ce projet car il offre :
+
+\begin{itemize}
+    \item une gestion robuste des contraintes d’intégrité ;
+    \item un support natif des transactions ACID ;
+    \item des performances élevées pour les requêtes complexes ;
+    \item une bonne compatibilité avec Python via \texttt{psycopg2}.
+\end{itemize}
+
+L’ensemble du schéma repose sur une modélisation relationnelle stricte,
+assurant solidité et extensibilité de l’application.
+
+\section{Présentation du schéma relationnel}
+
+La structure de la base de données repose sur quatre tables principales :
+
+\begin{itemize}
+    \item \textbf{utilisateur} : stockage des participants et administrateurs ;
+    \item \textbf{evenement} : description complète d’un événement ;
+    \item \textbf{bus} : créneaux aller / retour associés à un événement ;
+    \item \textbf{reservation} : inscription d'un utilisateur à un événement.
+\end{itemize}
+
+Les relations sont illustrées sur la Figure~\ref{fig:uml-bdd}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{figures/uml_classes.png}
+\caption{Modèle conceptuel de données (UML)}
+\label{fig:uml-bdd}
+\end{figure}
+
+\section{Description détaillée des tables}
+
+\subsection{Table \texttt{utilisateur}}
+
+Cette table contient toutes les informations personnelles nécessaires au fonctionnement :
+
+\begin{itemize}
+    \item nom et prénom,
+    \item email unique,
+    \item mot de passe (haché),
+    \item rôle (administrateur ou participant),
+    \item date de création automatique.
+\end{itemize}
+
+\textbf{Justification} :
+Séparer administrateurs et participants dans une seule table simplifie l’authentification,
+évite les duplications et reste conforme aux bonnes pratiques de normalisation.
+
+\subsection{Table \texttt{evenement}}
+
+Cette table contient les informations principales :
+
+\begin{itemize}
+    \item titre,
+    \item lieu (adresse + ville),
+    \item date,
+    \item capacité maximale,
+    \item description,
+    \item catégorie,
+    \item statut (fourni via une contrainte CHECK),
+    \item créateur (clé étrangère vers \texttt{utilisateur}).
+\end{itemize}
+
+\subsubsection*{Contraintes pertinentes}
+
+\begin{itemize}
+    \item la capacité doit être strictement positive ;
+    \item le statut doit appartenir à un ensemble contrôlé (4 choix possibles) ;
+    \item en cas de suppression de l’utilisateur créateur, l’événement existe toujours
+    grâce à \texttt{ON DELETE SET NULL}.
+\end{itemize}
+
+\subsection{Table \texttt{bus}}
+
+Chaque événement possède entre 0 et plusieurs créneaux aller ou retour.
+
+Champs principaux :
+
+\begin{itemize}
+    \item \texttt{fk\_evenement} : lien vers l’événement parent ;
+    \item \texttt{direction}: aller ou retour ;
+    \item \texttt{nombre\_places} : capacité du créneau ;
+    \item \texttt{description} : texte libre (horaire, arrêt…).
+\end{itemize}
+
+\subsubsection*{Rôle dans l'application}
+
+Les bus sont essentiels pour :
+
+\begin{itemize}
+    \item offrir plusieurs horaires possibles,
+    \item éviter la surcharge d’un seul créneau,
+    \item permettre une gestion dynamique des capacités.
+\end{itemize}
+
+\subsection{Table \texttt{reservation}}
+
+Il s’agit de la table centrale du système.
+Chaque réservation contient :
+
+\begin{itemize}
+    \item l’utilisateur associé ;
+    \item l’événement associé ;
+    \item les choix de transport (aller/retour) ;
+    \item les options (adhérent, SAM, boisson) ;
+    \item la date de réservation ;
+    \item un code unique pour gestion/admin.
+\end{itemize}
+
+\subsubsection*{Contraintes majeures}
+
+\begin{itemize}
+    \item un utilisateur ne peut avoir \textbf{qu’une seule réservation} par événement
+    grâce à une contrainte \texttt{UNIQUE (fk\_utilisateur, fk\_evenement)};
+    \item la suppression d’un utilisateur supprime automatiquement ses réservations ;
+    \item la suppression d'un événement supprime également les réservations liées.
+\end{itemize}
+
+\section{Normalisation et formes normales}
+
+La base respecte les trois formes normales (3NF) :
+
+\begin{itemize}
+    \item \textbf{1NF} : pas d’attribut multivalué (toutes les lignes atomiques).
+    \item \textbf{2NF} : aucune dépendance partielle ;
+          les clés primaires sont simples pour toutes les tables.
+    \item \textbf{3NF} : pas de dépendance transitive ;
+          exemple : les bus ne stockent jamais de champs propres à l’événement.
+\end{itemize}
+
+Cette structure évite :
+
+\begin{itemize}
+    \item duplication d’information,
+    \item anomalies de mise à jour,
+    \item coûts supplémentaires en stockage.
+\end{itemize}
+
+\section{Interactions entre services et DAO}
+
+La communication avec la base est entièrement encapsulée dans les DAO.
+Les services ne manipulent jamais directement SQL.
+Cela garantit :
+
+\begin{itemize}
+    \item la sécurité des requêtes (paramétrées),
+    \item la réutilisabilité de la logique métier,
+    \item une meilleure testabilité,
+    \item la possibilité d’intégrer ultérieurement un autre type de stockage.
+\end{itemize}
+
+Chaque DAO suit le même patron :
+
+\begin{enumerate}
+    \item ouverture d’une connexion (via \texttt{DBConnection}) ;
+    \item exécution d’une requête paramétrée ;
+    \item gestion du commit ou rollback automatique ;
+    \item transformation des résultats en modèles Pydantic.
+\end{enumerate}
+
+\section{Transactions et cohérence}
+
+Les opérations critiques (création de réservation, suppression d’événement)
+utilisent des transactions pour garantir :
+
+\begin{itemize}
+    \item \textbf{atomicité} : l’opération est entièrement réalisée ou annulée ;
+    \item \textbf{cohérence} : aucune réservation ne dépasse les capacités ;
+    \item \textbf{isolation} : deux inscriptions simultanées ne peuvent corrompre la base ;
+    \item \textbf{durabilité} : les modifications survivent aux coupures.
+\end{itemize}
+
+La gestion transactionnelle est assurée par PostgreSQL
+et pilotée automatiquement par \texttt{psycopg2}.
+
+\section{Synthèse}
+
+Le système de stockage est un élément fondamental de l’application.
+Ses forces principales sont :
+
+\begin{itemize}
+    \item une structure normalisée, claire et robuste ;
+    \item des contraintes SQL strictes assurant une cohérence forte ;
+    \item un découplage total entre logique métier et accès aux données ;
+    \item un schéma relationnel extensible :
+    \begin{itemize}
+        \item ajout de statistiques,
+        \item modules de facturation,
+        \item gestion des QR codes,
+        \item gestion d’un front-end web.
+    \end{itemize}
+\end{itemize}
+
+La base apporte les garanties nécessaires au bon fonctionnement de l'application,
+son évolutivité et sa stabilité sur le long terme.

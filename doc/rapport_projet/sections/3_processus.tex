@@ -1,0 +1,242 @@
+
+\chapter{Fonctionnement de l'application}
+
+\chapter{Fonctionnement de l'application}
+
+\section{Introduction}
+
+Ce chapitre présente le fonctionnement interne de l’application, en détaillant le cheminement d’un utilisateur lors des principales opérations.
+L’objectif est de montrer comment l’ensemble des composants décrits dans le chapitre précédent interagissent pour satisfaire les besoins exprimés.
+
+Nous consacrons une première partie à l’étude approfondie d’un processus central : \textbf{l’inscription d’un participant à un événement}.
+Nous analysons ensuite les autres fonctionnalités majeures afin de présenter la logique générale sans toutefois entrer dans un détail exhaustif de toutes les méthodes Python.
+
+\section{Processus central : inscription d'un participant à un événement}
+
+L’inscription à un événement constitue l’élément pivot de l’application.
+Ce processus implique :
+
+\begin{itemize}
+    \item l’utilisateur (participant),
+    \item le système d’authentification,
+    \item la vue d’inscription,
+    \item les services \textbf{EvenementService}, \textbf{BusService} et \textbf{ReservationService},
+    \item la base PostgreSQL,
+    \item l’API Brevo pour l’envoi d’un e-mail de confirmation.
+\end{itemize}
+
+Les différentes étapes sont décrites ci-après.
+
+\subsection{Étape 1 : authentification du participant}
+
+À son arrivée dans l’application, un participant doit s’identifier via la vue \texttt{ConnexionClientVue}.
+Cette vue utilise le \textbf{ParticipantService}, lequel s'appuie sur le \textbf{ParticipantDao} pour vérifier :
+
+\begin{enumerate}
+    \item que l’adresse e-mail existe ;
+    \item que le mot de passe saisi correspond au hash stocké (bcrypt) ;
+    \item que l’utilisateur n’est pas administrateur (séparation stricte des rôles).
+\end{enumerate}
+
+En cas de succès, un objet \texttt{Session} est créé pour stocker le participant connecté.
+
+\subsection{Étape 2 : choix d’un événement}
+
+La vue \texttt{ReservationVue} appelle :
+
+\begin{itemize}
+    \item \texttt{EvenementService.list\_events\_with\_places()},
+\end{itemize}
+
+qui retourne la liste des événements ouverts aux inscriptions ainsi que leurs places restantes.
+Ce calcul repose sur une requête SQL optimisée utilisant un \texttt{LEFT JOIN} sur les réservations existantes.
+
+Le participant sélectionne un événement.
+S’il n’y a plus de places, l’application refuse immédiatement l’inscription.
+
+\subsection{Étape 3 : sélection des créneaux de bus}
+
+Une fois l’événement choisi, l’application affiche :
+
+\begin{itemize}
+    \item la liste des bus \textbf{ALLER} associés à l'événement ;
+    \item la liste des bus \textbf{RETOUR}.
+\end{itemize}
+
+Chaque créneau possède :
+
+\begin{itemize}
+    \item une description (horaire, lieu de départ),
+    \item une capacité maximale,
+    \item le nombre de places restantes,
+    \item un identifiant unique.
+\end{itemize}
+
+Le participant choisit indépendamment un bus aller et un bus retour (ou aucun).
+
+\subsection{Étape 4 : options supplémentaires}
+
+Le système propose ensuite:
+
+\begin{itemize}
+    \item option \textbf{Adhérent BDE} ;
+    \item option \textbf{SAM} ;
+    \item option \textbf{Boisson}.
+\end{itemize}
+
+Cela permet d’adapter le prix final et de fournir au BDE des informations utiles à l’organisation.
+
+\subsection{Étape 5 : création de la réservation}
+
+La vue appelle ensuite :
+
+\begin{center}
+\texttt{ReservationService.create\_reservation(...)}
+\end{center}
+
+Le service effectue les contrôles suivants :
+
+\begin{enumerate}
+    \item L’utilisateur n’a pas déjà une réservation pour cet événement.
+    \item Les bus choisis ne sont pas complets.
+    \item Les données sont cohérentes (types, contraintes de capacité).
+\end{enumerate}
+
+Une fois validé, il demande au \textbf{DAO} :
+
+\begin{itemize}
+    \item d’insérer la réservation dans PostgreSQL ;
+    \item de générer un \textbf{code de réservation unique} (hash alphanumérique).
+\end{itemize}
+
+L’objet \texttt{ReservationModelOut} est renvoyé à la vue.
+
+\subsection{Étape 6 : envoi du mail de confirmation (Brevo)}
+
+Enfin, le service envoie automatiquement un e-mail (via \texttt{api\_brevo.py}) :
+
+\begin{itemize}
+    \item confirmation de l’inscription,
+    \item récapitulatif des bus choisis,
+    \item statut de l’événement (disponible en ligne, pas encore finalisé...),
+    \item code de réservation unique,
+    \item instructions de paiement.
+\end{itemize}
+
+L’opération est dite \textit{best-effort} : une erreur d’envoi n’annule pas la réservation, mais un message informatif est affiché.
+
+\subsection{Diagramme UML du processus d’inscription}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/uml_inscription.png}
+\caption{Diagramme UML de séquence du processus d’inscription}
+\label{fig:uml-inscription}
+\end{figure}
+
+\section{Autres processus de l'application}
+
+Bien que l’inscription soit le processus central, l'application gère de nombreuses autres fonctionnalités que nous présentons brièvement.
+
+\subsection{Création d’un événement (admin)}
+
+Ce processus suit les étapes suivantes :
+
+\begin{enumerate}
+    \item L’administrateur saisit les informations (titre, date, capacité, statut...).
+    \item \texttt{EvenementService.create\_event()} valide les données.
+    \item Le \textbf{DAO} insère l’événement.
+    \item L’administrateur configure les bus associés.
+    \item Un \textbf{mail d’alerte} est envoyé à tous les utilisateurs inscrits (fonctionnalité F08).
+\end{enumerate}
+
+Cette fonctionnalité implique directement l’API Brevo, via une boucle d’envoi.
+
+\subsection{Modification d’un événement}
+
+L’administrateur peut modifier la date, la capacité, ou le statut d’un événement.
+La modification suit une logique similaire :
+
+\begin{itemize}
+    \item chargement des valeurs existantes ;
+    \item saisie et validation ;
+    \item mise à jour via \texttt{EvenementDao.update()} ;
+    \item affichage de la nouvelle configuration.
+\end{itemize}
+
+\subsection{Annulation ou suppression d’un événement}
+
+La suppression est contrôlée :
+
+\begin{itemize}
+    \item interdiction si des réservations sont encore actives,
+    \item sinon suppression SQL,
+    \item possibilité future d'envoyer un mail d’annulation (fonction extensible).
+\end{itemize}
+
+\subsection{Consultation des réservations personnelles}
+
+L’utilisateur peut consulter ses réservations, grâce à :
+
+\begin{center}
+\texttt{ReservationDao.find\_by\_user()}
+\end{center}
+
+La vue affiche :
+
+\begin{itemize}
+    \item l’événement réservé,
+    \item les options choisies,
+    \item la date de réservation.
+\end{itemize}
+
+\subsection{Modification d’une réservation}
+
+La fonctionnalité FO2 permet :
+
+\begin{itemize}
+    \item modification des bus choisis,
+    \item modification des options (adhérent, SAM, boisson).
+\end{itemize}
+
+Un mail de confirmation de modification est envoyé à l’utilisateur.
+
+\subsection{Suppression d’une réservation (par code)}
+
+À l’aide d’un code unique, un administrateur peut supprimer une réservation.
+Le système :
+
+\begin{enumerate}
+    \item recherche la réservation par code ;
+    \item vérifie son existence ;
+    \item supprime la ligne SQL ;
+    \item libère les places associées.
+\end{enumerate}
+
+\subsection{Visualisation statistique}
+
+Une vue dédiée permet à l’administrateur d’obtenir :
+
+\begin{itemize}
+    \item le nombre total d’inscrits,
+    \item les taux de remplissage,
+    \item le nombre d'adhérents,
+    \item les taux d'utilisation des bus.
+\end{itemize}
+
+Cette fonctionnalité s’appuie sur des requêtes SQL agrégées.
+
+\section{Synthèse}
+
+L’application propose un ensemble cohérent de fonctionnalités couvrant entièrement les besoins du BDE :
+
+\begin{itemize}
+    \item gestion des utilisateurs,
+    \item configuration des événements,
+    \item gestion des bus,
+    \item inscriptions,
+    \item suivis en temps réel,
+    \item communication automatisée par mail.
+\end{itemize}
+
+Le processus d'inscription constitue l’élément central et démontre la qualité de la décomposition en couches : chaque composant joue un rôle clair, garantissant une application robuste, maintenable et évolutive.

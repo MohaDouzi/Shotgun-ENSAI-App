@@ -64,3 +64,11 @@ class ParticipantService:
         if not existing:
             raise ValueError("Participant introuvable pour mise à jour du mot de passe.")
         return self.dao.change_password(id_utilisateur, new_password)
+
+    # ---------- EMAILS ----------
+    def get_all_participants_emails(self) -> List[str]:
+        """
+        Retourne tous les emails des participants (administrateur = FALSE).
+        Utilisé par F08 : notification d'un nouvel événement.
+        """
+        return self.dao.find_all_emails()

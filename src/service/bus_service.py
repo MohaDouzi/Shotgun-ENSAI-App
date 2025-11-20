@@ -58,8 +58,14 @@ class BusService:
         Récupère la capacité totale pour une direction donnée via le DAO.
         """
         return self.dao.get_capacite_totale(id_evenement, direction)
+    
+    def get_buses_for_event(self, id_evenement: int) -> list[CreneauBusModelOut]:
+        """
+        Récupère la liste des objets Bus pour un événement.
+        """
+        return self.dao.find_by_event_id(id_evenement)
 
-    # ---------- CRUD CLASSIQUE ----------
+    # ---------- CRUD ----------
 
     def create_bus(self, bus_in: CreneauBusModelIn) -> CreneauBusModelOut:
         """

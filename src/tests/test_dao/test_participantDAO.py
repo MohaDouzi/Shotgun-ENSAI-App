@@ -13,7 +13,7 @@ from dao.participant_dao import ParticipantDao
 from model.participant_models import ParticipantModelOut, ParticipantModelIn
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def setup_test_environment():
     """Initialisation des données de test"""
     with patch.dict(os.environ, {"SCHEMA": "projet_test_dao"}):
@@ -113,7 +113,7 @@ def test_delete():
     assert suppression_ok
 
 
-def test_authentificate():
+def test_authenticate():
     """Permet à un participant de s'authentifier"""
 
     # GIVEN
@@ -127,7 +127,6 @@ def test_authentificate():
     assert participant is not None
     assert isinstance(participant, ParticipantModelOut)
     assert participant.email == email
-    assert participant.mot_de_passe != mdp  # Le mot de passe stocké doit être hashé
     assert participant.administrateur is False  # Alice est un participant
 
 

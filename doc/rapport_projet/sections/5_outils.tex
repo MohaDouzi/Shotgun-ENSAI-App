@@ -1,0 +1,186 @@
+
+\chapter{Outils mis en place}
+
+\chapter{Outils mis en place et démarche d’assurance qualité}
+
+\section{Organisation du groupe}
+
+Le projet a été réalisé en binôme, avec une organisation inspirée des méthodes
+agiles tout en restant adaptée à un cadre académique et à des contraintes d’emploi du temps.
+L’objectif était de répartir les responsabilités de manière équilibrée et de garantir un suivi régulier.
+
+\subsection{Répartition des rôles}
+
+La gestion du projet s’est structurée autour de deux axes principaux :
+
+\begin{itemize}
+    \item \textbf{Développement backend} : structure de la base de données, conception des DAO,
+          services métiers, logique de vérification des contraintes ;
+    \item \textbf{Interface console et expérience utilisateur} :
+          développement des vues, gestion des formulaires InquirerPy,
+          scénarios utilisateurs et cohérence des menus.
+\end{itemize}
+
+Chaque étape importante faisait l’objet d’une revue mutuelle.
+Cette double vérification a permis de réduire fortement les erreurs et d’améliorer la qualité globale.
+
+\subsection{Cycle de travail}
+
+Le travail se déroulait de manière itérative :
+
+\begin{enumerate}
+    \item définition des fonctionnalités à implémenter ;
+    \item rédaction d’un plan technique ou d’un mini-schéma UML ;
+    \item implémentation dans une branche dédiée ;
+    \item tests manuels unitaires ;
+    \item intégration dans la branche principale ;
+    \item vérification en conditions réelles dans l’interface console.
+\end{enumerate}
+
+Cette approche incrémentale a permis de conserver une vision claire de l’avancement
+et d'éviter les effets tunnel.
+
+\section{Outils logiciels utilisés}
+
+La réalisation du projet a nécessité l’utilisation de plusieurs outils et bibliothèques,
+dont certains assurent la structure du code et d'autres facilitent l’interaction avec l’utilisateur ou la persistance des données.
+
+\subsection{Environnement de développement}
+
+Le développement a été effectué à l’aide des outils suivants :
+
+\begin{itemize}
+    \item \textbf{Python 3.12} : langage principal du projet ;
+    \item \textbf{Visual Studio Code} : éditeur de choix pour son intégration Git
+          et ses extensions Python ;
+    \item \textbf{Git / GitHub} : gestion des versions, branches fonctionnelles,
+          revue de code entre membres du groupe.
+\end{itemize}
+
+Un fichier \texttt{requirements.txt} a été maintenu tout au long du projet afin de garantir
+la portabilité de l'application.
+
+\subsection{Bibliothèques techniques}
+
+Plusieurs bibliothèques majeures ont été utilisées :
+
+\begin{itemize}
+    \item \textbf{psycopg2} : interaction avec la base PostgreSQL ;
+    \item \textbf{Pydantic} : structuration des modèles (validation stricte des données) ;
+    \item \textbf{InquirerPy} : interface console ergonomique et interactive ;
+    \item \textbf{bcrypt} : gestion sécurisée des mots de passe ;
+    \item \textbf{dotenv} : gestion des variables d’environnement (API, mots de passe, etc.) ;
+    \item \textbf{Brevo API} : envoi des emails automatiques (inscription, modification, alertes).
+\end{itemize}
+
+Ces bibliothèques ont été choisies pour leur maturité technique, leur documentation
+et leur stabilité dans des environnements de production.
+
+\section{Conventions de code et organisation interne}
+
+\subsection{Structure en couches}
+
+L'application suit une architecture en trois couches :
+
+\begin{itemize}
+    \item \textbf{Vue (interface)} : gère l'interaction utilisateur ;
+    \item \textbf{Services métiers} : applique la logique de vérification et de traitement ;
+    \item \textbf{DAO} : couche unique responsable de l’accès à la base.
+\end{itemize}
+
+Ce découplage rend l’application :
+
+\begin{itemize}
+    \item plus testable ;
+    \item plus modulaire ;
+    \item plus extensible (remplacement futur d’une base SQL par une API externe ou un fichier).
+\end{itemize}
+
+\subsection{Standards respectés}
+
+\begin{itemize}
+    \item conventions PEP 8 ;
+    \item nommage explicite anglais ;
+    \item documentation en docstrings ;
+    \item séparation nette entre logique et affichage ;
+    \item validation systématique des données via Pydantic.
+\end{itemize}
+
+\section{Tests et assurance qualité}
+
+\subsection{Stratégie de tests}
+
+Une batterie de tests manuels et scénarisés a été menée tout au long du développement :
+
+\begin{itemize}
+    \item tests unitaires des méthodes DAO principales ;
+    \item tests d’intégration Simulant un utilisateur réel dans la console ;
+    \item tests de charge simples pour vérifier la gestion des capacités ;
+    \item test d’envoi de mails via un compte Brevo de test.
+\end{itemize}
+
+Même si les tests ne sont pas automatisés via \texttt{pytest}, ils ont été structurés
+pour cibler les zones critiques : création d’événements, gestion des capacités,
+ suppression de réservations et vérification des contraintes SQL.
+
+\subsection{Cas particuliers testés}
+
+Les tests se sont concentrés sur les zones à risque :
+
+\begin{itemize}
+    \item double réservation d’un même utilisateur ;
+    \item dépassement de capacité d’un bus ;
+    \item tentative de suppression d’un événement avec réservations ;
+    \item gestion d’un email déjà utilisé ;
+    \item envoi d’emails avec connexion API incorrecte ;
+    \item déconnexions accidentelles pendant l'inscription.
+\end{itemize}
+
+L'application a été conçue pour réagir proprement à chaque situation :
+
+\begin{itemize}
+    \item message d’erreur explicite ;
+    \item rollback automatique lors d’un problème SQL ;
+    \item aucune donnée incohérente en base.
+\end{itemize}
+
+\section{Performance et temps de traitement}
+
+Les performances ont été mesurées empiriquement au cours du développement :
+
+\begin{itemize}
+    \item la création d’un événement : $\sim$30 ms ;
+    \item inscription d’un utilisateur : $\sim$40 ms ;
+    \item affichage de la liste des événements : $\sim$10--15 ms ;
+    \item envoi d’un email Brevo : $\sim$250--600 ms
+          (limité par le réseau et l’API externe).
+\end{itemize}
+
+Les opérations lourdes sont toutes externalisées (envoi de mail).
+Le reste du traitement reste local et quasi instantané.
+
+L’utilisation d’index sur les clés étrangères
+(\texttt{fk\_utilisateur}, \texttt{fk\_evenement})
+a fortement contribué à maintenir d’excellentes performances.
+
+\section{Robustesse face aux changements externes}
+
+L'application a été conçue pour s’adapter à des modifications futures :
+
+\begin{itemize}
+    \item remplacement facile de l’API Brevo par une autre API d’envoi d’emails ;
+    \item possibilité de migrer vers une base SQL distante (hébergée en ligne) ;
+    \item ajout possible d’une couche front-end web sans modification du backend ;
+    \item ajout futur de statistiques ou QR codes sans toucher au schéma principal.
+\end{itemize}
+
+Les données sont centralisées dans une base PostgreSQL normalisée,
+ce qui facilite les évolutions et maintient la cohérence à long terme.
+
+\section{Conclusion}
+
+Cette partie montre que le projet ne se limite pas à une implémentation fonctionnelle :
+il s’agit d’une application structurée, robuste, testée et évolutive.
+Les outils de développement, l’organisation du travail
+et la démarche d’assurance qualité ont permis d’obtenir un système fiable,
+répondant pleinement aux besoins du BDE.
