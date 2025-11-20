@@ -1,7 +1,7 @@
 -- 1) UTILISATEUR
 INSERT INTO utilisateur (id_utilisateur, nom, prenom, telephone, email, mot_de_passe, administrateur)
 VALUES
-(1, 'Dupont', 'Alice', '0601020304', 'khalid.jerrari@gmail.com', '$2b$12$fZE56Wsei2WahQDwQeGqTuk5UV0STIDWHmfckEYQMskVzKRCFFV7q', FALSE),
+(1, 'Dupont', 'Alice', '0601020304', 'alice.dupont@email.com', '$2b$12$fZE56Wsei2WahQDwQeGqTuk5UV0STIDWHmfckEYQMskVzKRCFFV7q', FALSE),
 (2, 'Martin', 'Bob', '0605060708', 'bob.martin@email.com', '$2b$12$ZI9goAGUifVgF7dcZbNvgOjKED/Bfo193c5BDQW5RSaNxvkqu9QYa', TRUE),
 (3, 'Durand', 'Caroline', '0608091011', 'caroline.durand@email.com', '$2b$12$T5xxw5LIJUv1YuYuIedUguUpNA7MNpJDXIZCpDrl4fUViE2K3itMq', FALSE),
 (4, 'Petit', 'David', '0611121314', 'david.petit@email.com', '$2b$12$qYjWLSa6VwcE.Ex9MoABGOyaAQME3K7wZiO/VIFRSWjKnwFcxZvnC', FALSE)
@@ -57,7 +57,7 @@ VALUES
 -- Caroline (ID 3) va à l'Evt 2 (Lieu=50, Bus=50)
 (2, 3, 2, FALSE, FALSE, TRUE,  FALSE, FALSE),
 -- David (ID 4) va à l'Evt 3 (Lieu=100, Bus=75)
-(3, 4, 3, TRUE,  FALSE, TRUE,  TRUE,  TRUE)
+(3, 4, 3, TRUE,  FALSE, TRUE,  TRUE,  FALSE)
 ON CONFLICT (id_reservation) DO NOTHING;
 
 ---
