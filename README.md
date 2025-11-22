@@ -259,24 +259,96 @@ Check the **Actions** tab on your GitHub repository to monitor the pipeline.
 
 ### Source Code Organization (`src/`)
 
-```
-src/
-├── business_object/    # Domain entities
-├── dao/               # Data access
-├── service/           # Business logic
-├── view/              # User interface
-│   ├── accueil/
-│   ├── auth/
-│   ├── client/
-│   ├── administrateur/
-│   ├── consulter/
-│   ├── evenement/
-│   └── reservations/
-├── utils/             # Utilities (logs, security, etc.)
-├── tests/             # Unit tests
-└── main.py           # Application entry point
-```
-
+---
+├── data
+│   ├── init_db.sql
+│   ├── pop_db.sql
+│   └── pop_db_test.sql
+├── src
+│   ├── business_object
+│   │   ├── Administrateur.py
+│   │   ├── CreneauBus.py
+│   │   ├── Evenement.py
+│   │   ├── Participant.py
+│   │   ├── Reservation.py
+│   │   └── Utilisateur.py
+│   ├── dao
+│   │   ├── administrateur_dao.py
+│   │   ├── commentaire_dao.py
+│   │   ├── consultation_evenement_dao.py
+│   │   ├── creneau_bus_dao.py
+│   │   ├── db_connection.py
+│   │   ├── evenement_dao.py
+│   │   ├── participant_dao.py
+│   │   ├── reservation_dao.py
+│   │   └── utilisateur_dao.py
+│   ├── logs
+│   ├── model
+│   │   ├── administrateur_models.py
+│   │   ├── commentaire_models.py
+│   │   ├── creneauBus_models.py
+│   │   ├── evenement_models.py
+│   │   ├── participant_models.py
+│   │   ├── reservation_models.py
+│   │   └── utilisateur_models.py
+│   ├── service
+│   │   ├── administrateur_service.py
+│   │   ├── bus_service.py
+│   │   ├── commentaire_service.py
+│   │   ├── consultation_evenement_service.py
+│   │   ├── evenement_service.py
+│   │   ├── participant_service.py
+│   │   ├── reservation_service.py
+│   │   └── utilisateur_service.py
+│   ├── tests
+│   │   ├── test_dao
+│   │   │   ├── test_administrateurDAO.py
+│   │   │   ├── test_creneau_busDAO.py
+│   │   │   ├── test_evenementDAO.py
+│   │   │   ├── test_participantDAO.py
+│   │   │   ├── test_reservationDAO.py
+│   │   │   └── test_utilisateurDAO.py
+│   │   └── test_service
+│   │       ├── test_evenement_service.py
+│   │       └── test_reservation_service.py
+│   ├── utils
+│   │   ├── api_brevo.py
+│   │   ├── log_decorator.py
+│   │   ├── log_init.py
+│   │   ├── reset_database.py
+│   │   ├── securite.py
+│   │   └── singleton.py
+│   ├── view
+│   │   ├── accueil
+│   │   │   └── accueil_vue.py
+│   │   ├── administrateur
+│   │   │   └── connexion_admin_vue.py
+│   │   ├── auth
+│   │   │   ├── connexion_vue.py
+│   │   │   ├── creation_compte_vue.py
+│   │   │   ├── modification_compte_vue.py
+│   │   │   └── suppression_compte_vue.py
+│   │   ├── client
+│   │   │   └── connexion_client_vue.py
+│   │   ├── commentaires
+│   │   │   └── commentaire_vue.py
+│   │   ├── consulter
+│   │   │   ├── consulter_evenement_vue.py
+│   │   │   ├── liste_reservation_vue.py
+│   │   │   └── statistiques_vue.py
+│   │   ├── evenement
+│   │   │   ├── creer_evenement_vue.py
+│   │   │   ├── modifier_evenement_vue.py
+│   │   │   └── supprimer_evenement_vue.py
+│   │   ├── reservations
+│   │   │   ├── mes_reservations_vue.py
+│   │   │   ├── modification_reservations_vue.py
+│   │   │   ├── reservation_vue.py
+│   │   │   └── suppression_reservations_vue.py
+│   │   ├── session.py
+│   │   └── vue_abstraite.py
+│   └── main.py
+└── arborescence.py
 ---
 
 ##  Contributors
