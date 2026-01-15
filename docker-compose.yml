@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=shotgun_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - PYTHONPATH=src
+      # Laisse ces deux lignes vides pour que l'utilisateur mette ses propres clés API s'il veut
+      - TOKEN_BREVO=
+      - EMAIL_BREVO=
+    stdin_open: true # Nécessaire pour InquirerPy (menus interactifs)
+    tty: true        # Nécessaire pour InquirerPy
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=shotgun_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Initialise la BDD automatiquement avec tes scripts SQL
+      - ./data:/docker-entrypoint-initdb.d
+
+volumes:
+  postgres_data:
